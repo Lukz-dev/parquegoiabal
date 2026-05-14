@@ -706,6 +706,7 @@ async function fazerCadastro() {
       body: formData
     });
     const data = await res.json();
+    console.log('Response status:', res.status, 'Data:', data);
     if (res.ok) {
       state.user = data.user;
       loginSuccess();
@@ -713,8 +714,8 @@ async function fazerCadastro() {
       toast(data.error || 'Erro ao criar conta', 'error');
     }
   } catch (e) {
-    console.error('Erro no cadastro:', e);
-    toast('Erro de conexão. Verifique sua internet e tente novamente.', 'error');
+    console.error('Erro completo no cadastro:', e);
+    toast('Erro de conexão: ' + e.message, 'error');
   }
 }
 

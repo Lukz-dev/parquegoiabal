@@ -119,10 +119,17 @@ def register():
         user = User(nome=nome, sobrenome=sobrenome, email=email, senha=hashed_senha, tipo=tipo, foto=foto_path)
         db.session.add(user)
         db.session.commit()
-        return jsonify({'user': {'id': user.id, 'nome': user.nome, 'email': user.email, 'tipo': user.tipo, 'foto': f'/uploads/{os.path.basename(foto_path)}' if foto_path else None}})
+        
+        foto_url = None
+        if foto_path:
+            foto_url = f'/uploads/{os.path.basename(foto_path)}'
+        
+        return jsonify({'user': {'id': user.id, 'nome': user.nome, 'email': user.email, 'tipo': user.tipo, 'foto': foto_url}})
     except Exception as e:
+        import traceback
         print(f'Erro no registro: {e}')
-        return jsonify({'error': 'Erro ao criar conta. Tente novamente.'}), 500
+        print(f'Traceback: {traceback.format_exc()}')
+        return jsonify({'error': f'Erro ao criar conta: {str(e)}'}), 500
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -304,8 +311,15 @@ def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_DEBUG', '0') == '1'
+    host = os.environ.get('FLASK_HOST', '127.0.0.1')
+    
+    print(f"🚀 Iniciando servidor em http://{host}:{port}")
+    print(f"Debug mode: {debug}")
+    
     app.run(
-        host='0.0.0.0',
-        port=int(os.environ.get('PORT', 5000)),
-        debug=os.environ.get('FLASK_DEBUG', '0') == '1'
+        host=host,
+        port=port,
+        debug=debug
     )
