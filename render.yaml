@@ -3,7 +3,7 @@ services:
     name: goiabal-site
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn Main:app
+    startCommand: gunicorn Main:app --bind 0.0.0.0:$PORT
     envVars:
       - key: FLASK_DEBUG
         value: "0"

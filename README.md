@@ -25,5 +25,6 @@ Este projeto pode ser hospedado em um serviço como Render, Railway ou PythonAny
 - Render define `PORT` automaticamente.
 - O arquivo `render.yaml` também está incluído para facilitar o deploy automático no Render.
 - Em produção, remova `debug=True` ou defina `FLASK_DEBUG=0`.
+- Para o front-end hospedado no GitHub Pages, use o URL público do backend (por exemplo `https://goiabal-site.onrender.com`) na variável `API_BASE_URL` de `index.html`.
 - Atenção: o banco SQLite e uploads em disco são efêmeros no Render; use armazenamento externo para dados persistentes se precisar.
 - Caso use outro serviço, garanta que o deploy execute `pip install -r requirements.txt` e `gunicorn Main:app`.

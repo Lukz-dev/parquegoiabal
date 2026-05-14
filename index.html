@@ -630,6 +630,16 @@ let state = {
   usuarios: []
 };
 
+const DEFAULT_API_BASE_URL = 'http://127.0.0.1:5000';
+const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? DEFAULT_API_BASE_URL
+  : 'https://goiabal-site.onrender.com';
+// Se você usar outro serviço, ajuste o endereço acima para o URL público do seu backend.
+
+function apiUrl(path) {
+  return `${API_BASE_URL}${path}`;
+}
+
 // ── NAVIGATION ───────────────────────────────────────
 function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -656,7 +666,7 @@ async function fazerLogin() {
   const email = document.getElementById('login-email').value.trim();
   const senha = document.getElementById('login-senha').value;
   try {
-    const res = await fetch('/api/login', {
+    const res = await fetch(apiUrl('/api/login'), {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({email, senha})
@@ -692,7 +702,7 @@ async function fazerCadastro() {
     
     // Verificar conexão com servidor
     console.log('📡 Verificando conexão com servidor...');
-    const healthCheck = await fetch('/api/health', { method: 'GET', timeout: 5000 });
+    const healthCheck = await fetch(apiUrl('/api/health'), { method: 'GET' });
     if (!healthCheck.ok) {
       console.error('❌ Servidor não respondeu ao health check');
       toast('Servidor não está respondendo. Tente mais tarde.', 'error');
@@ -718,10 +728,9 @@ async function fazerCadastro() {
     }
     
     console.log('📨 Enviando requisição de registro...');
-    const res = await fetch('/api/register', {
+    const res = await fetch(apiUrl('/api/register'), {
       method: 'POST',
-      body: formData,
-      timeout: 10000
+      body: formData
     });
     
     console.log('📥 Resposta recebida. Status:', res.status);
@@ -880,7 +889,7 @@ document.getElementById('registro-form').addEventListener('submit', async e => {
   }
   
   try {
-    const res = await fetch('/api/registros', { method: 'POST', body: formData });
+    const res = await fetch(apiUrl('/api/registros'), { method: 'POST', body: formData });
     console.log('Resposta HTTP:', res.status, res.statusText);
     const data = await res.json();
     console.log('Dados da resposta:', data);
@@ -902,7 +911,7 @@ document.getElementById('registro-form').addEventListener('submit', async e => {
 
 async function loadRegistros() {
   try {
-    const res = await fetch('/api/registros');
+    const res = await fetch(apiUrl('/api/registros'));
     state.registros = await res.json();
     renderRegistros();
   } catch (e) {
@@ -945,7 +954,7 @@ document.getElementById('denuncia-form').addEventListener('submit', async e => {
   formData.append('tipo', state.tipoSelecionado);
   formData.append('usuario_id', state.user.id);
   try {
-    const res = await fetch('/api/denuncias', { method: 'POST', body: formData });
+    const res = await fetch(apiUrl('/api/denuncias'), { method: 'POST', body: formData });
     const data = await res.json();
     if (res.ok) {
       toast('Denúncia registrada! As autoridades serão notificadas. 🚨', 'success');
@@ -963,7 +972,7 @@ document.getElementById('denuncia-form').addEventListener('submit', async e => {
 
 async function loadDenuncias() {
   try {
-    const res = await fetch('/api/denuncias');
+    const res = await fetch(apiUrl('/api/denuncias'));
     state.denuncias = await res.json();
     renderDenuncias();
   } catch (e) {
@@ -1002,7 +1011,7 @@ function emailPrefeitura() {
 // ── STATS ─────────────────────────────────────────────
 async function updateStats() {
   try {
-    const res = await fetch('/api/stats');
+    const res = await fetch(apiUrl('/api/stats'));
     const stats = await res.json();
     document.getElementById('stat-usuarios').textContent = stats.usuarios;
     document.getElementById('stat-registros').textContent = stats.registros;
@@ -1033,7 +1042,7 @@ async function loadGaleria() {
   gridEl.innerHTML = '';
   
   try {
-    const res = await fetch('/api/imagens');
+    const res = await fetch(apiUrl('/api/imagens'));
     const imagens = await res.json();
     
     loadingEl.style.display = 'none';
@@ -1074,7 +1083,7 @@ async function excluirImagem(registroId) {
     return;
   }
   try {
-    const res = await fetch(`/api/imagens/${registroId}`, {
+    const res = await fetch(apiUrl(`/api/imagens/${registroId}`), {
       method: 'DELETE',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({ usuario_id: state.user.id })

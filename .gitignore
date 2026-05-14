@@ -8,3 +8,6 @@ ngrok.exe
 .DS_Store
 .idea/
 .vscode/
+
+goiabal.db
+uploads/
