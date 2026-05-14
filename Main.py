@@ -213,7 +213,7 @@ def registros():
             return jsonify({'message': 'Registro criado'})
         except Exception as e:
             print(f"Erro ao criar registro: {e}")
-            return jsonify({'error': 'Erro interno do servidor'}), 500
+            return jsonify({'error': f'Erro interno do servidor: {str(e)}'}), 500
     else:
         regs = Registro.query.options(joinedload(Registro.user)).all()
         result = []
