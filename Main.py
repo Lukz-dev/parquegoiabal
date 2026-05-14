@@ -186,10 +186,10 @@ def registros():
             tipo = request.form.get('tipo')
             local = request.form.get('local', '')
             desc = request.form.get('desc', '')
-            lat = request.form.get('lat')
-            lng = request.form.get('lng')
-            if lat: lat = float(lat)
-            if lng: lng = float(lng)
+            lat_str = request.form.get('lat')
+            lng_str = request.form.get('lng')
+            lat = float(lat_str) if lat_str and lat_str.strip() else None
+            lng = float(lng_str) if lng_str and lng_str.strip() else None
             if not especie:
                 return jsonify({'error': 'Nome da espécie obrigatório'}), 400
             img_path = None
