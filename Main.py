@@ -8,7 +8,8 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
+     allow_headers=["Content-Type"])
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///goiabal.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -80,41 +81,64 @@ with app.app_context():
 def index():
     return send_from_directory('.', 'index.html')
 
+@app.route('/api/health', methods=['GET'])
+def health():
+    return jsonify({'status': 'ok', 'message': 'Servidor está funcionando!'}), 200
+
 @app.route('/api/register', methods=['POST'])
 def register():
     try:
+        print(f"\n{'='*60}")
+        print(f"📝 Nova requisição de registro")
+        print(f"{'='*60}")
+        print(f"Content-Type: {request.content_type}")
+        print(f"Form data: {dict(request.form)}")
+        
         nome = request.form.get('nome')
         sobrenome = request.form.get('sobrenome', '')
         email = request.form.get('email')
         senha = request.form.get('senha')
         tipo = request.form.get('tipo')
+        
+        print(f"\nDados recebidos:")
+        print(f"  Nome: {nome}")
+        print(f"  Email: {email}")
+        print(f"  Tipo: {tipo}")
+        
         if not nome or not email or not senha or len(senha) < 6:
+            print(f"❌ Validação falhou: dados inválidos")
             return jsonify({'error': 'Dados inválidos'}), 400
         if tipo == 'admin':
+            print(f"❌ Tipo admin não permitido")
             return jsonify({'error': 'Registro de administrador não permitido via site'}), 403
         if User.query.filter_by(email=email).first():
+            print(f"❌ E-mail {email} já cadastrado")
             return jsonify({'error': 'E-mail já cadastrado'}), 400
         
         foto_path = None
         if 'foto' in request.files:
             file = request.files['foto']
             if file and file.filename:
+                print(f"📸 Processando foto: {file.filename}")
                 # Verificar tamanho do arquivo (50MB máximo para fotos de perfil)
                 file.seek(0, os.SEEK_END)
                 file_size = file.tell()
                 file.seek(0)
                 
                 if file_size > 50 * 1024 * 1024:
+                    print(f"❌ Foto muito grande: {file_size} bytes")
                     return jsonify({'error': 'Foto de perfil muito grande. O tamanho máximo permitido é 50MB.'}), 413
                 
                 filename = secure_filename(file.filename)
                 foto_path = os.path.join(app.config['UPLOAD_FOLDER'], f"profile_{filename}")
                 try:
                     file.save(foto_path)
+                    print(f"✓ Foto salva em: {foto_path}")
                 except Exception as e:
-                    print(f'Erro ao salvar foto: {e}')
+                    print(f'❌ Erro ao salvar foto: {e}')
                     return jsonify({'error': 'Erro ao salvar foto de perfil'}), 500
         
+        print(f"\n🔐 Criando hash de senha...")
         hashed_senha = generate_password_hash(senha)
         user = User(nome=nome, sobrenome=sobrenome, email=email, senha=hashed_senha, tipo=tipo, foto=foto_path)
         db.session.add(user)
@@ -124,11 +148,17 @@ def register():
         if foto_path:
             foto_url = f'/uploads/{os.path.basename(foto_path)}'
         
+        print(f"✅ Usuário criado com sucesso!")
+        print(f"   ID: {user.id}")
+        print(f"   Email: {user.email}")
+        print(f"{'='*60}\n")
+        
         return jsonify({'user': {'id': user.id, 'nome': user.nome, 'email': user.email, 'tipo': user.tipo, 'foto': foto_url}})
     except Exception as e:
         import traceback
-        print(f'Erro no registro: {e}')
-        print(f'Traceback: {traceback.format_exc()}')
+        print(f'❌ ERRO NO REGISTRO: {e}')
+        print(f'Traceback:\n{traceback.format_exc()}')
+        print(f"{'='*60}\n")
         return jsonify({'error': f'Erro ao criar conta: {str(e)}'}), 500
 
 @app.route('/api/login', methods=['POST'])

@@ -682,9 +682,24 @@ async function fazerCadastro() {
   const tipo = document.getElementById('cad-tipo').value;
   const fotoInput = document.getElementById('cad-foto');
   
-  if (!nome || !email || senha.length < 6) { toast('Preencha todos os campos corretamente', 'error'); return; }
+  if (!nome || !email || senha.length < 6) { 
+    toast('Preencha todos os campos corretamente', 'error'); 
+    return; 
+  }
   
   try {
+    console.log('🚀 Iniciando cadastro...');
+    
+    // Verificar conexão com servidor
+    console.log('📡 Verificando conexão com servidor...');
+    const healthCheck = await fetch('/api/health', { method: 'GET', timeout: 5000 });
+    if (!healthCheck.ok) {
+      console.error('❌ Servidor não respondeu ao health check');
+      toast('Servidor não está respondendo. Tente mais tarde.', 'error');
+      return;
+    }
+    console.log('✓ Servidor respondendo');
+    
     const formData = new FormData();
     formData.append('nome', nome);
     formData.append('sobrenome', sobrenome);
@@ -699,23 +714,41 @@ async function fazerCadastro() {
         return;
       }
       formData.append('foto', fotoInput.files[0]);
+      console.log('📸 Foto adicionada:', fotoInput.files[0].name);
     }
     
+    console.log('📨 Enviando requisição de registro...');
     const res = await fetch('/api/register', {
       method: 'POST',
-      body: formData
+      body: formData,
+      timeout: 10000
     });
+    
+    console.log('📥 Resposta recebida. Status:', res.status);
+    
     const data = await res.json();
-    console.log('Response status:', res.status, 'Data:', data);
+    console.log('✓ Response JSON:', data);
+    
     if (res.ok) {
+      console.log('✅ Registro bem-sucedido!');
       state.user = data.user;
       loginSuccess();
     } else {
+      console.error('❌ Erro no servidor:', data.error);
       toast(data.error || 'Erro ao criar conta', 'error');
     }
   } catch (e) {
-    console.error('Erro completo no cadastro:', e);
-    toast('Erro de conexão: ' + e.message, 'error');
+    console.error('❌ ERRO COMPLETO:', e);
+    console.error('Tipo de erro:', e.name);
+    console.error('Mensagem:', e.message);
+    
+    if (e instanceof TypeError) {
+      toast('Erro de conexão: Servidor não está acessível. Certifique-se de que está rodando.', 'error');
+    } else if (e instanceof AbortError) {
+      toast('Timeout: Servidor demorou muito para responder.', 'error');
+    } else {
+      toast('Erro de conexão: ' + e.message, 'error');
+    }
   }
 }
 
