@@ -82,39 +82,47 @@ def index():
 
 @app.route('/api/register', methods=['POST'])
 def register():
-    nome = request.form.get('nome')
-    sobrenome = request.form.get('sobrenome', '')
-    email = request.form.get('email')
-    senha = request.form.get('senha')
-    tipo = request.form.get('tipo')
-    if not nome or not email or not senha or len(senha) < 6:
-        return jsonify({'error': 'Dados inválidos'}), 400
-    if tipo == 'admin':
-        return jsonify({'error': 'Registro de administrador não permitido via site'}), 403
-    if User.query.filter_by(email=email).first():
-        return jsonify({'error': 'E-mail já cadastrado'}), 400
-    
-    foto_path = None
-    if 'foto' in request.files:
-        file = request.files['foto']
-        if file and file.filename:
-            # Verificar tamanho do arquivo (50MB máximo para fotos de perfil)
-            file.seek(0, os.SEEK_END)
-            file_size = file.tell()
-            file.seek(0)
-            
-            if file_size > 50 * 1024 * 1024:
-                return jsonify({'error': 'Foto de perfil muito grande. O tamanho máximo permitido é 50MB.'}), 413
-            
-            filename = secure_filename(file.filename)
-            foto_path = os.path.join(app.config['UPLOAD_FOLDER'], f"profile_{filename}")
-            file.save(foto_path)
-    
-    hashed_senha = generate_password_hash(senha)
-    user = User(nome=nome, sobrenome=sobrenome, email=email, senha=hashed_senha, tipo=tipo, foto=foto_path)
-    db.session.add(user)
-    db.session.commit()
-    return jsonify({'user': {'id': user.id, 'nome': user.nome, 'email': user.email, 'tipo': user.tipo, 'foto': f'/uploads/{os.path.basename(foto_path)}' if foto_path else None}})
+    try:
+        nome = request.form.get('nome')
+        sobrenome = request.form.get('sobrenome', '')
+        email = request.form.get('email')
+        senha = request.form.get('senha')
+        tipo = request.form.get('tipo')
+        if not nome or not email or not senha or len(senha) < 6:
+            return jsonify({'error': 'Dados inválidos'}), 400
+        if tipo == 'admin':
+            return jsonify({'error': 'Registro de administrador não permitido via site'}), 403
+        if User.query.filter_by(email=email).first():
+            return jsonify({'error': 'E-mail já cadastrado'}), 400
+        
+        foto_path = None
+        if 'foto' in request.files:
+            file = request.files['foto']
+            if file and file.filename:
+                # Verificar tamanho do arquivo (50MB máximo para fotos de perfil)
+                file.seek(0, os.SEEK_END)
+                file_size = file.tell()
+                file.seek(0)
+                
+                if file_size > 50 * 1024 * 1024:
+                    return jsonify({'error': 'Foto de perfil muito grande. O tamanho máximo permitido é 50MB.'}), 413
+                
+                filename = secure_filename(file.filename)
+                foto_path = os.path.join(app.config['UPLOAD_FOLDER'], f"profile_{filename}")
+                try:
+                    file.save(foto_path)
+                except Exception as e:
+                    print(f'Erro ao salvar foto: {e}')
+                    return jsonify({'error': 'Erro ao salvar foto de perfil'}), 500
+        
+        hashed_senha = generate_password_hash(senha)
+        user = User(nome=nome, sobrenome=sobrenome, email=email, senha=hashed_senha, tipo=tipo, foto=foto_path)
+        db.session.add(user)
+        db.session.commit()
+        return jsonify({'user': {'id': user.id, 'nome': user.nome, 'email': user.email, 'tipo': user.tipo, 'foto': f'/uploads/{os.path.basename(foto_path)}' if foto_path else None}})
+    except Exception as e:
+        print(f'Erro no registro: {e}')
+        return jsonify({'error': 'Erro ao criar conta. Tente novamente.'}), 500
 
 @app.route('/api/login', methods=['POST'])
 def login():
