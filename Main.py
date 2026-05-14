@@ -8,8 +8,8 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app, origins="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
-     allow_headers=["Content-Type"])
+CORS(app, origins=["https://lukz-dev.github.io"], methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
+     allow_headers=["Content-Type", "Authorization"])
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///goiabal.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads'
