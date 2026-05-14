@@ -178,38 +178,42 @@ def login():
 @app.route('/api/registros', methods=['GET', 'POST'])
 def registros():
     if request.method == 'POST':
-        if 'usuario_id' not in request.form:
-            return jsonify({'error': 'Não autorizado'}), 401
-        usuario_id = int(request.form['usuario_id'])
-        especie = request.form.get('especie')
-        tipo = request.form.get('tipo')
-        local = request.form.get('local', '')
-        desc = request.form.get('desc', '')
-        lat = request.form.get('lat')
-        lng = request.form.get('lng')
-        if lat: lat = float(lat)
-        if lng: lng = float(lng)
-        if not especie:
-            return jsonify({'error': 'Nome da espécie obrigatório'}), 400
-        img_path = None
-        if 'img' in request.files:
-            file = request.files['img']
-            if file and file.filename:
-                # Verificar tamanho do arquivo (50MB máximo)
-                file.seek(0, os.SEEK_END)
-                file_size = file.tell()
-                file.seek(0)
-                
-                if file_size > 50 * 1024 * 1024:
-                    return jsonify({'error': 'Imagem muito grande. O tamanho máximo permitido é 50MB.'}), 413
-                
-                filename = secure_filename(file.filename)
-                img_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                file.save(img_path)
-        registro = Registro(especie=especie, tipo=tipo, local=local, desc=desc, img=img_path, lat=lat, lng=lng, usuario_id=usuario_id)
-        db.session.add(registro)
-        db.session.commit()
-        return jsonify({'message': 'Registro criado'})
+        try:
+            if 'usuario_id' not in request.form:
+                return jsonify({'error': 'Não autorizado'}), 401
+            usuario_id = int(request.form['usuario_id'])
+            especie = request.form.get('especie')
+            tipo = request.form.get('tipo')
+            local = request.form.get('local', '')
+            desc = request.form.get('desc', '')
+            lat = request.form.get('lat')
+            lng = request.form.get('lng')
+            if lat: lat = float(lat)
+            if lng: lng = float(lng)
+            if not especie:
+                return jsonify({'error': 'Nome da espécie obrigatório'}), 400
+            img_path = None
+            if 'img' in request.files:
+                file = request.files['img']
+                if file and file.filename:
+                    # Verificar tamanho do arquivo (50MB máximo)
+                    file.seek(0, os.SEEK_END)
+                    file_size = file.tell()
+                    file.seek(0)
+                    
+                    if file_size > 50 * 1024 * 1024:
+                        return jsonify({'error': 'Imagem muito grande. O tamanho máximo permitido é 50MB.'}), 413
+                    
+                    filename = secure_filename(file.filename)
+                    img_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    file.save(img_path)
+            registro = Registro(especie=especie, tipo=tipo, local=local, desc=desc, img=img_path, lat=lat, lng=lng, usuario_id=usuario_id)
+            db.session.add(registro)
+            db.session.commit()
+            return jsonify({'message': 'Registro criado'})
+        except Exception as e:
+            print(f"Erro ao criar registro: {e}")
+            return jsonify({'error': 'Erro interno do servidor'}), 500
     else:
         regs = Registro.query.options(joinedload(Registro.user)).all()
         result = []
