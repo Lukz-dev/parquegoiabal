@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: goiabal-site
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn Main:app
+    envVars:
+      - key: FLASK_DEBUG
+        value: "0"

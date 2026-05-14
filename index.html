@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parque do Goiabal — Biodiversidade & Preservação</title>
+<style>
+  :root {
+    --verde: #2D6A4F;
+    --verde-claro: #52B788;
+    --verde-palido: #D8F3DC;
+    --terra: #B7472A;
+    --terra-claro: #E07A5F;
+    --amarelo: #F4A261;
+    --creme: #F8F4EE;
+    --escuro: #1A2F23;
+    --cinza: #8A9B8E;
+    --branco: #FFFFFF;
+    --sombra: 0 2px 16px rgba(26,47,35,0.10);
+    --radius: 16px;
+    --radius-sm: 8px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--creme); color: var(--escuro); min-height:100vh; }
+  h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+
+  /* ── NAV ─────────────────────────────────────────── */
+  nav {
+    background: var(--escuro);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px; position: sticky; top:0; z-index:100;
+  }
+  .logo { display:flex; align-items:center; gap:.6rem; color:#fff; font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:700; text-decoration:none; }
+  .logo-icon { width:32px; height:32px; background:var(--verde-claro); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; }
+  nav ul { list-style:none; display:flex; gap:.25rem; }
+  nav ul li a {
+    color: rgba(255,255,255,.7); text-decoration:none; padding:.4rem .85rem;
+    border-radius:var(--radius-sm); font-size:.9rem; font-weight:500; transition:.2s;
+    display:flex; align-items:center; gap:.35rem;
+  }
+  nav ul li a:hover, nav ul li a.active { color:#fff; background:rgba(255,255,255,.1); }
+  .nav-user { display:flex; align-items:center; gap:.75rem; }
+  .btn-login { background:var(--verde-claro); color:var(--escuro); border:none; padding:.45rem 1.1rem; border-radius:var(--radius-sm); font-family:'DM Sans',sans-serif; font-weight:600; font-size:.9rem; cursor:pointer; transition:.2s; }
+  .btn-login:hover { background:#3da870; }
+  #user-info { display:none; align-items:center; gap:.5rem; color:#fff; font-size:.9rem; }
+  #user-info .avatar { width:32px; height:32px; background:var(--verde-claro); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.85rem; color:var(--escuro); }
+  .btn-sair { background:none; border:1px solid rgba(255,255,255,.3); color:rgba(255,255,255,.7); padding:.35rem .7rem; border-radius:var(--radius-sm); font-size:.8rem; cursor:pointer; transition:.2s; }
+  .btn-sair:hover { border-color:#fff; color:#fff; }
+
+  /* ── PAGES ───────────────────────────────────────── */
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* ── HOME ────────────────────────────────────────── */
+  .hero {
+    background: linear-gradient(160deg, var(--escuro) 0%, #2D6A4F 60%, #52B788 100%);
+    padding: 5rem 2rem 4rem;
+    text-align:center; color:#fff; position:relative; overflow:hidden;
+  }
+  .hero::before {
+    content:''; position:absolute; inset:0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='8'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events:none;
+  }
+  .hero h1 { font-size:3rem; font-weight:800; letter-spacing:-.03em; margin-bottom:.5rem; }
+  .hero h1 span { color:var(--verde-claro); }
+  .hero p { font-size:1.1rem; opacity:.8; max-width:520px; margin:0 auto 2rem; }
+  .hero-btns { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
+  .btn-primary { background:var(--verde-claro); color:var(--escuro); border:none; padding:.75rem 1.75rem; border-radius:var(--radius); font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; cursor:pointer; transition:.2s; }
+  .btn-primary:hover { background:#3da870; transform:translateY(-1px); }
+  .btn-secondary { background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.3); padding:.75rem 1.75rem; border-radius:var(--radius); font-family:'Syne',sans-serif; font-weight:600; font-size:1rem; cursor:pointer; transition:.2s; }
+  .btn-secondary:hover { background:rgba(255,255,255,.2); }
+
+  .stats-bar { background:#fff; display:flex; justify-content:center; gap:0; flex-wrap:wrap; border-bottom:1px solid #eee; }
+  .stat-item { padding:1.5rem 2.5rem; text-align:center; border-right:1px solid #eee; }
+  .stat-item:last-child { border-right:none; }
+  .stat-num { font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; color:var(--verde); }
+  .stat-label { font-size:.8rem; color:var(--cinza); margin-top:.2rem; }
+
+  .home-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.5rem; padding:3rem 2rem; max-width:1100px; margin:0 auto; }
+  .home-card {
+    background:#fff; border-radius:var(--radius); padding:2rem;
+    box-shadow:var(--sombra); cursor:pointer; transition:.25s; border:2px solid transparent;
+    display:flex; flex-direction:column; gap:.75rem;
+  }
+  .home-card:hover { transform:translateY(-3px); border-color:var(--verde-claro); box-shadow:0 8px 32px rgba(45,106,79,.15); }
+  .card-icon { width:52px; height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.6rem; }
+  .card-icon.green { background:var(--verde-palido); }
+  .card-icon.red { background:#fde8e4; }
+  .card-icon.blue { background:#e8f0fe; }
+  .card-icon.orange { background:#fff0e0; }
+  .home-card h3 { font-size:1.1rem; font-weight:700; }
+  .home-card p { font-size:.9rem; color:var(--cinza); line-height:1.6; }
+  .card-arrow { margin-top:auto; color:var(--verde-claro); font-weight:700; font-size:.9rem; }
+
+  /* ── MODAL AUTH ──────────────────────────────────── */
+  .modal-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,.5);
+    z-index:200; align-items:center; justify-content:center;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal { background:#fff; border-radius:var(--radius); padding:2.5rem; width:min(440px,90vw); position:relative; }
+  .modal h2 { font-size:1.5rem; margin-bottom:.25rem; }
+  .modal p { color:var(--cinza); font-size:.9rem; margin-bottom:1.5rem; }
+  .modal-tabs { display:flex; gap:.5rem; margin-bottom:1.5rem; border-bottom:1px solid #eee; }
+  .modal-tab { padding:.6rem 1rem; border:none; background:none; font-family:'Syne',sans-serif; font-weight:600; font-size:.9rem; cursor:pointer; color:var(--cinza); border-bottom:2px solid transparent; margin-bottom:-1px; transition:.2s; }
+  .modal-tab.active { color:var(--verde); border-color:var(--verde); }
+  .form-group { margin-bottom:1rem; }
+  .form-group label { display:block; font-size:.85rem; font-weight:500; margin-bottom:.4rem; color:var(--escuro); }
+  .form-group input, .form-group select, .form-group textarea {
+    width:100%; padding:.65rem .9rem; border:1.5px solid #ddd; border-radius:var(--radius-sm);
+    font-family:'DM Sans',sans-serif; font-size:.95rem; transition:.2s; background:#fafafa;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:var(--verde-claro); background:#fff; }
+  .btn-full { width:100%; padding:.75rem; background:var(--verde); color:#fff; border:none; border-radius:var(--radius-sm); font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; cursor:pointer; transition:.2s; margin-top:.5rem; }
+  .btn-full:hover { background:#1f4d38; }
+  .modal-close { position:absolute; top:1rem; right:1rem; background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--cinza); width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:50%; }
+  .modal-close:hover { background:#f0f0f0; }
+
+  /* ── REGISTRO BIODIVERSIDADE ─────────────────────── */
+  .page-header { background:var(--escuro); color:#fff; padding:2.5rem 2rem 2rem; }
+  .page-header h2 { font-size:2rem; font-weight:800; }
+  .page-header p { opacity:.7; margin-top:.3rem; }
+  .page-content { max-width:1100px; margin:0 auto; padding:2rem; }
+
+  .upload-zone {
+    border:2.5px dashed var(--verde-claro); border-radius:var(--radius); padding:3rem;
+    text-align:center; cursor:pointer; transition:.2s; background:var(--verde-palido);
+    position:relative;
+  }
+  .upload-zone:hover { background:#c8ecd1; border-color:var(--verde); }
+  .upload-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; }
+  #preview-img { width:100%; max-height:220px; object-fit:cover; border-radius:var(--radius-sm); display:none; margin-bottom:1rem; }
+
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+  @media(max-width:640px) { .two-col { grid-template-columns:1fr; } }
+
+  .registros-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1.25rem; margin-top:2rem; }
+  .registro-card { background:#fff; border-radius:var(--radius); overflow:hidden; box-shadow:var(--sombra); }
+  .registro-img { width:100%; height:160px; object-fit:cover; background:var(--verde-palido); display:flex; align-items:center; justify-content:center; font-size:3rem; }
+  .registro-img img { width:100%; height:100%; object-fit:cover; }
+  .registro-info { padding:1rem; }
+  .registro-info h4 { font-size:1rem; font-weight:700; }
+  .registro-info .meta { font-size:.8rem; color:var(--cinza); margin-top:.25rem; }
+  .user-info { display:flex; align-items:center; gap:.4rem; }
+  .user-avatar-small { width:20px; height:20px; border-radius:50%; object-fit:cover; border:1px solid var(--verde-claro); }
+  .tipo-badge { display:inline-block; padding:.2rem .6rem; border-radius:99px; font-size:.75rem; font-weight:600; margin-top:.5rem; }
+  .tipo-fauna { background:#e8f0fe; color:#1a56db; }
+  .tipo-flora { background:var(--verde-palido); color:var(--verde); }
+
+  /* ── DENÚNCIAS ───────────────────────────────────── */
+  .denuncia-tipos { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem; }
+  .tipo-btn {
+    padding:1.25rem; border-radius:var(--radius); border:2px solid #ddd; background:#fff;
+    cursor:pointer; text-align:left; transition:.2s; font-family:'DM Sans',sans-serif;
+  }
+  .tipo-btn:hover { border-color:var(--verde-claro); }
+  .tipo-btn.selected-incendio { border-color:var(--terra); background:#fde8e4; }
+  .tipo-btn.selected-poluicao { border-color:#1a56db; background:#e8f0fe; }
+  .tipo-btn .tipo-icon { font-size:2rem; display:block; margin-bottom:.4rem; }
+  .tipo-btn strong { font-family:'Syne',sans-serif; font-size:1rem; display:block; }
+  .tipo-btn small { font-size:.8rem; color:var(--cinza); }
+
+  .btn-bombeiros {
+    width:100%; padding:1rem; background:var(--terra); color:#fff; border:none; border-radius:var(--radius);
+    font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:.75rem; transition:.2s; margin-top:.75rem;
+  }
+  .btn-bombeiros:hover { background:#9e3820; transform:translateY(-1px); }
+  .btn-prefeitura {
+    width:100%; padding:.85rem; background:#1a56db; color:#fff; border:none; border-radius:var(--radius);
+    font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:.75rem; transition:.2s; margin-top:.75rem;
+  }
+  .btn-prefeitura:hover { background:#1447b5; }
+
+  .denuncias-lista { margin-top:2rem; display:flex; flex-direction:column; gap:1rem; }
+  .denuncia-item { background:#fff; border-radius:var(--radius); padding:1.25rem; box-shadow:var(--sombra); border-left:4px solid; display:flex; gap:1rem; align-items:flex-start; }
+  .denuncia-item.incendio { border-color:var(--terra); }
+  .denuncia-item.poluicao { border-color:#1a56db; }
+  .denuncia-item .di-icon { font-size:1.5rem; }
+  .denuncia-item h4 { font-weight:700; font-size:.95rem; }
+  .denuncia-item p { font-size:.85rem; color:var(--cinza); margin-top:.2rem; }
+  .denuncia-item .status { display:inline-block; padding:.15rem .6rem; border-radius:99px; font-size:.75rem; font-weight:600; margin-top:.4rem; }
+  .status-aberto { background:#fff0e0; color:#c06c0e; }
+  .status-andamento { background:#e8f0fe; color:#1a56db; }
+  .status-resolvido { background:var(--verde-palido); color:var(--verde); }
+
+  /* ── GALERIA ─────────────────────────────────────── */
+  .galeria-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1.5rem; margin-top:2rem; }
+  .galeria-item { background:#fff; border-radius:var(--radius); overflow:hidden; box-shadow:var(--sombra); transition:.25s; }
+  .galeria-item:hover { transform:translateY(-3px); box-shadow:0 8px 32px rgba(45,106,79,.15); }
+  .galeria-img { width:100%; height:200px; object-fit:cover; }
+  .galeria-info { padding:1rem; }
+  .galeria-info h4 { font-size:1rem; font-weight:700; margin-bottom:.5rem; }
+  .galeria-meta { font-size:.8rem; color:var(--cinza); margin-bottom:.25rem; display:flex; align-items:center; gap:.3rem; }
+  .galeria-user { display:flex; align-items:center; gap:.4rem; margin-top:.5rem; }
+  .galeria-user-avatar { width:24px; height:24px; border-radius:50%; object-fit:cover; border:1px solid var(--verde-claro); }
+  .galeria-delete { margin-top:1rem; display:inline-flex; align-items:center; justify-content:center; gap:.4rem; padding:.55rem .9rem; border-radius:999px; border:1px solid rgba(220,38,38,.2); background:#fff5f5; color:#b91c1c; cursor:pointer; transition:.2s; font-weight:700; font-size:.85rem; }
+  .galeria-delete:hover { background:#fee2e2; border-color:#fca5a5; }
+
+  /* ── TOAST ───────────────────────────────────────── */
+  .toast-container { position:fixed; bottom:2rem; right:2rem; z-index:300; display:flex; flex-direction:column; gap:.5rem; }
+  .toast {
+    background:var(--escuro); color:#fff; padding:1rem 1.5rem; border-radius:var(--radius-sm);
+    font-size:.9rem; box-shadow:var(--sombra); min-width:260px;
+    animation: slideIn .3s ease; display:flex; align-items:center; gap:.75rem;
+  }
+  .toast.success { background:var(--verde); }
+  .toast.error { background:var(--terra); }
+  @keyframes slideIn { from { transform:translateX(100px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+
+  /* ── SOBRE ───────────────────────────────────────── */
+  .sobre-hero { background:var(--verde); color:#fff; padding:3rem 2rem; text-align:center; }
+  .sobre-hero h2 { font-size:2.2rem; font-weight:800; }
+  .sobre-hero p { opacity:.8; max-width:560px; margin:.75rem auto 0; line-height:1.7; }
+  .equipe-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1.25rem; }
+  .membro { background:#fff; border-radius:var(--radius); padding:1.5rem; text-align:center; box-shadow:var(--sombra); }
+  .membro .avatar { width:60px; height:60px; border-radius:50%; background:var(--verde-palido); margin:0 auto .75rem; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:800; font-size:1.2rem; color:var(--verde); position:relative; overflow:hidden; }
+  .membro .avatar img { width:100%; height:100%; object-fit:cover; position:absolute; inset:0; display:block; }
+  .membro .avatar .initial { position:relative; z-index:1; }
+  .membro h4 { font-size:1rem; font-weight:700; }
+  .membro .papel { font-size:.8rem; color:var(--cinza); margin-top:.25rem; }
+  .membro .responsavel { font-size:.75rem; background:var(--verde-palido); color:var(--verde); padding:.2rem .6rem; border-radius:99px; margin-top:.4rem; display:inline-block; font-weight:600; }
+  .info-card { background:#fff; border-radius:var(--radius); padding:1.75rem; box-shadow:var(--sombra); }
+  .info-card h3 { font-size:1.1rem; font-weight:700; margin-bottom:.75rem; display:flex; align-items:center; gap:.5rem; }
+  .info-card ul { list-style:none; display:flex; flex-direction:column; gap:.5rem; }
+  .info-card ul li { font-size:.9rem; color:var(--cinza); display:flex; align-items:center; gap:.5rem; }
+  .info-card ul li::before { content:'✓'; color:var(--verde-claro); font-weight:700; }
+  .licenca-badge { display:inline-flex; align-items:center; gap:.5rem; background:var(--verde-palido); color:var(--verde); padding:.5rem 1rem; border-radius:var(--radius-sm); font-weight:700; font-size:.9rem; margin-top:1rem; }
+
+  /* ── SECTION TITLE ───────────────────────────────── */
+  .section-title { font-size:1.5rem; font-weight:800; margin-bottom:1.5rem; display:flex; align-items:center; gap:.5rem; }
+  .section-title::after { content:''; flex:1; height:2px; background:var(--verde-palido); }
+
+  /* ── REQUIRED ────────────────────────────────────── */
+  .required-notice {
+    background:#fff0e0; border:1px solid var(--amarelo); border-radius:var(--radius-sm);
+    padding:1rem 1.25rem; margin-bottom:1.5rem; font-size:.9rem; color:#7d4e00;
+    display:flex; align-items:center; gap:.75rem;
+  }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+  @media(max-width:600px) { .form-row { grid-template-columns:1fr; } }
+
+  .map-marker { font-size: 24px; text-align: center; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo" onclick="showPage('home')">
+    <div class="logo-icon">🌿</div>
+    Goiabal
+  </a>
+  <ul>
+    <li><a href="#" onclick="showPage('home')" class="active" id="nav-home">🏠 Início</a></li>
+    <li><a href="#" onclick="showPage('registro')" id="nav-registro">🦋 Biodiversidade</a></li>
+    <li><a href="#" onclick="showPage('denuncia')" id="nav-denuncia">🚨 Denúncias</a></li>
+    <li><a href="#" onclick="showPage('sobre')" id="nav-sobre">ℹ️ Sobre</a></li>
+    <li><a href="#" onclick="showPage('imagens')" id="nav-imagens">📸 Imagens</a></li>
+  </ul>
+  <div class="nav-user">
+    <div id="user-info">
+      <div class="avatar" id="user-avatar">?</div>
+      <span id="user-name-nav"></span>
+      <button class="btn-sair" onclick="sair()">Sair</button>
+    </div>
+    <button class="btn-login" id="btn-abrir-login" onclick="openModal()">Entrar / Cadastrar</button>
+  </div>
+</nav>
+
+<!-- MODAL AUTH -->
+<div class="modal-overlay" id="modal-auth">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2>🌿 Parque do Goiabal</h2>
+    <p>Entre para registrar e contribuir com a preservação</p>
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab('login')">Entrar</button>
+      <button class="modal-tab" onclick="switchTab('cadastro')">Criar conta</button>
+    </div>
+    <div id="tab-login">
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email" id="login-email" placeholder="seu@email.com">
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="login-senha" placeholder="••••••">
+      </div>
+      <button class="btn-full" onclick="fazerLogin()">Entrar</button>
+    </div>
+    <div id="tab-cadastro" style="display:none">
+      <div class="form-row">
+        <div class="form-group"><label>Nome</label><input type="text" id="cad-nome" placeholder="Seu nome"></div>
+        <div class="form-group"><label>Sobrenome</label><input type="text" id="cad-sobrenome" placeholder="Sobrenome"></div>
+      </div>
+      <div class="form-group"><label>E-mail</label><input type="email" id="cad-email" placeholder="seu@email.com"></div>
+      <div class="form-group"><label>Senha</label><input type="password" id="cad-senha" placeholder="Mínimo 6 caracteres"></div>
+      <div class="form-group">
+        <label>Tipo de usuário</label>
+        <select id="cad-tipo">
+          <option value="morador">Morador de Ituiutaba</option>
+          <option value="visitante">Visitante do Parque</option>
+          <option value="estudante">Estudante / Pesquisador</option>
+          <option value="orgao">Órgão público</option>
+        </select>
+        <small style="color:var(--cinza);font-size:0.75rem;">Contas de administrador são criadas apenas pelo servidor e não podem ser registradas publicamente.</small>
+      </div>
+      <div class="form-group">
+        <label>Foto de perfil (opcional)</label>
+        <input type="file" id="cad-foto" accept="image/*" onchange="previewFotoPerfil(event)">
+        <div id="preview-foto-container" style="margin-top:0.5rem;display:none;">
+          <img id="preview-foto" src="" alt="Preview da foto" style="max-width:100px;max-height:100px;border-radius:8px;border:2px solid var(--verde-claro);">
+        </div>
+        <small style="color:var(--cinza);font-size:0.8rem;">JPG, PNG ou WebP — máx. 50MB</small>
+      </div>
+      <button class="btn-full" onclick="fazerCadastro()">Criar conta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAGE: HOME ──────────────────────────────────── -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <h1>Parque do <span>Goiabal</span></h1>
+    <p>Plataforma de software livre para registro da biodiversidade e denúncias ambientais em Ituiutaba-MG</p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="showPage('registro')">🦋 Registrar espécie</button>
+      <button class="btn-secondary" onclick="showPage('denuncia')">🚨 Fazer denúncia</button>
+    </div>
+  </div>
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-num" id="stat-usuarios">0</div><div class="stat-label">Usuários cadastrados</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-registros">0</div><div class="stat-label">Espécies registradas</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-denuncias">0</div><div class="stat-label">Denúncias realizadas</div></div>
+    <div class="stat-item"><div class="stat-num">GNU GPL</div><div class="stat-label">Licença livre</div></div>
+  </div>
+  <div class="home-grid">
+    <div class="home-card" onclick="showPage('registro')">
+      <div class="card-icon green">🦎</div>
+      <h3>Registrar Biodiversidade</h3>
+      <p>Fotografe e registre fauna e flora do Parque. Ajude a construir o banco de dados da biodiversidade local.</p>
+      <div class="card-arrow">Acessar →</div>
+    </div>
+    <div class="home-card" onclick="showPage('denuncia')">
+      <div class="card-icon red">🔥</div>
+      <h3>Denunciar Problema Ambiental</h3>
+      <p>Registre incêndios, poluição e outras ocorrências. Acesso direto ao Corpo de Bombeiros (193).</p>
+      <div class="card-arrow">Acessar →</div>
+    </div>
+    <div class="home-card" onclick="showPage('sobre')">
+      <div class="card-icon orange">ℹ️</div>
+      <h3>Sobre o Projeto</h3>
+      <p>Projeto extensionista do IFTM, desenvolvido em software livre para preservação do Parque do Goiabal.</p>
+      <div class="card-arrow">Saiba mais →</div>
+    </div>
+    <div class="home-card" onclick="showPage('imagens')">
+      <div class="card-icon blue">📸</div>
+      <h3>Galeria de Imagens</h3>
+      <p>Veja todas as fotos registradas da biodiversidade do parque por nossa comunidade.</p>
+      <div class="card-arrow">Ver imagens →</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAGE: REGISTRO ──────────────────────────────── -->
+<div class="page" id="page-registro">
+  <div class="page-header">
+    <h2>🦋 Registro de Biodiversidade</h2>
+    <p>Registre fauna e flora do Parque do Goiabal</p>
+  </div>
+  <div class="page-content">
+    <div id="registro-aviso" class="required-notice" style="display:none">
+      ⚠️ <span>Você precisa estar <a href="#" onclick="openModal()" style="color:var(--terra);font-weight:600">logado</a> para registrar espécies.</span>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="section-title">📷 Novo Registro</div>
+        <form id="registro-form" enctype="multipart/form-data">
+          <div class="upload-zone" onclick="triggerUpload()">
+            <input type="file" id="file-input" name="img" accept="image/*" onchange="previewImage(event)">
+            <img id="preview-img" src="" alt="preview">
+            <div id="upload-text">
+              <div class="upload-icon">📷</div>
+              <h4>Clique para adicionar foto</h4>
+              <p>JPG, PNG ou WebP — máx. 50MB</p>
+            </div>
+          </div>
+          <br>
+          <div class="form-group">
+            <label>Nome da espécie *</label>
+            <input type="text" id="reg-especie" name="especie" placeholder="Ex: Bem-te-vi, Ipê amarelo...">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tipo</label>
+              <select id="reg-tipo" name="tipo">
+                <option value="fauna">🦎 Fauna (animal)</option>
+                <option value="flora">🌿 Flora (planta)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Localização no parque</label>
+              <input type="text" id="reg-local" name="local" placeholder="Ex: Trilha norte, lago...">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Latitude</label>
+              <input type="text" id="reg-lat" name="lat" placeholder="Ex: -18.1234" readonly>
+            </div>
+            <div class="form-group">
+              <label>Longitude</label>
+              <input type="text" id="reg-lng" name="lng" placeholder="Ex: -48.5678" readonly>
+            </div>
+          </div>
+          <button type="button" class="btn-full" onclick="getLocation()" style="margin-bottom:1rem;">📍 Obter localização atual</button>
+          <div class="form-group">
+            <label>Descrição / observações</label>
+            <textarea id="reg-desc" name="desc" rows="3" placeholder="Descreva o que observou, comportamento, condições..."></textarea>
+          </div>
+          <button type="submit" class="btn-full">✅ Enviar registro</button>
+        </form>
+      </div>
+      <div>
+        <div class="section-title">📋 Registros recentes</div>
+        <div class="registros-grid" id="lista-registros">
+          <!-- populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAGE: DENÚNCIA ──────────────────────────────── -->
+<div class="page" id="page-denuncia">
+  <div class="page-header" style="background:var(--terra);">
+    <h2>🚨 Denúncia Ambiental</h2>
+    <p>Reporte incêndios, poluição e outros problemas</p>
+  </div>
+  <div class="page-content">
+    <div id="denuncia-aviso" class="required-notice" style="display:none">
+      ⚠️ <span>Você precisa estar <a href="#" onclick="openModal()" style="color:var(--terra);font-weight:600">logado</a> para registrar denúncias.</span>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="section-title">📝 Nova Denúncia</div>
+        <div class="denuncia-tipos">
+          <button class="tipo-btn" id="tipo-incendio" onclick="selecionarTipo('incendio')">
+            <span class="tipo-icon">🔥</span>
+            <strong>Incêndio</strong>
+            <small>Queimadas e fogo</small>
+          </button>
+          <button class="tipo-btn" id="tipo-poluicao" onclick="selecionarTipo('poluicao')">
+            <span class="tipo-icon">🏭</span>
+            <strong>Poluição</strong>
+            <small>Lixo, esgoto, etc.</small>
+          </button>
+        </div>
+        <form id="denuncia-form">
+          <div class="form-group">
+            <label>Descrição detalhada *</label>
+            <textarea id="den-desc" name="desc" rows="4" placeholder="Descreva o problema com o máximo de detalhes possível..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Localização</label>
+              <input type="text" id="den-local" name="local" placeholder="Onde ocorre o problema?">
+            </div>
+            <div class="form-group">
+              <label>Gravidade</label>
+              <select id="den-gravidade" name="gravidade">
+                <option value="baixa">🟡 Baixa</option>
+                <option value="media">🟠 Média</option>
+                <option value="alta">🔴 Alta / Urgente</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Latitude</label>
+              <input type="text" id="den-lat" name="lat" placeholder="Ex: -18.1234" readonly>
+            </div>
+            <div class="form-group">
+              <label>Longitude</label>
+              <input type="text" id="den-lng" name="lng" placeholder="Ex: -48.5678" readonly>
+            </div>
+          </div>
+          <button type="button" class="btn-full" onclick="getLocationDenuncia()" style="margin-bottom:1rem;">📍 Obter localização atual</button>
+          <button type="submit" class="btn-full">🚨 Enviar denúncia</button>
+        </form>
+        <button class="btn-bombeiros" onclick="ligar193()">
+          🚒 Ligar para Bombeiros — 193
+        </button>
+        <button class="btn-prefeitura" onclick="emailPrefeitura()">
+          ✉️ Enviar e-mail à Prefeitura
+        </button>
+      </div>
+      <div>
+        <div class="section-title">📋 Denúncias registradas</div>
+        <div class="denuncias-lista" id="lista-denuncias">
+          <!-- populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAGE: SOBRE ─────────────────────────────────── -->
+<div class="page" id="page-sobre">
+  <div class="sobre-hero">
+    <h2>🌿 Sobre o Projeto</h2>
+    <p>Uma solução de software livre desenvolvida por estudantes do IFTM para preservação do Parque do Goiabal em Ituiutaba-MG</p>
+  </div>
+  <div class="page-content">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2.5rem;" class="two-col">
+      <div class="info-card">
+        <h3>🎯 Objetivo</h3>
+        <p style="font-size:.9rem;color:var(--cinza);line-height:1.7;">
+          Desenvolver uma plataforma web de software livre para registro da biodiversidade 
+          e denúncia de problemas ambientais no Parque do Goiabal, aumentando o engajamento 
+          da comunidade e a capacidade de monitoramento ambiental da área.
+        </p>
+        <div class="licenca-badge">📜 Licença GNU GPL v3</div>
+      </div>
+      <div class="info-card">
+        <h3>⚙️ Tecnologias</h3>
+        <ul>
+          <li>HTML5, CSS3 e JavaScript</li>
+          <li>Backend em Python</li>
+          <li>Banco de dados relacional</li>
+          <li>Controle de versão via GitHub</li>
+          <li>Hospedagem com software livre</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h3>🎯 Metas de impacto</h3>
+        <ul>
+          <li>100 usuários cadastrados no 1º mês</li>
+          <li>50 registros de biodiversidade</li>
+          <li>Redução no tempo de acionamento de bombeiros</li>
+          <li>Integração com comunidade local e UFU</li>
+        </ul>
+      </div>
+      <div class="info-card">
+        <h3>🔮 Futuro</h3>
+        <ul>
+          <li>Aplicativo mobile (fase 2)</li>
+          <li>Integração com sistemas municipais</li>
+          <li>Expansão para outras áreas verdes</li>
+          <li>Parceria com órgãos ambientais</li>
+        </ul>
+      </div>
+    </div>
+    <div class="section-title">👥 Equipe</div>
+    <div class="equipe-grid">
+      <div class="membro">
+        <div class="avatar">
+          <span class="initial">LF</span>
+          <img src="/uploads/dev-lucas.jpg" alt="Foto de Lucas Freitas" onerror="this.style.display='none'">
+        </div>
+        <h4>Lucas Freitas</h4>
+      </div>
+      <div class="membro">
+        <div class="avatar">
+          <span class="initial">GM</span>
+          <img src="/uploads/dev-gustavo.jpg" alt="Foto de Gustavo Marques" onerror="this.style.display='none'">
+        </div>
+        <h4>Gustavo Marques</h4>
+      </div>
+      <div class="membro">
+        <div class="avatar">
+          <span class="initial">LO</span>
+          <img src="/uploads/dev-luis.jpg" alt="Foto de Luis Pereira" onerror="this.style.display='none'">
+        </div>
+        <h4>Luis Pereira</h4>
+      </div>
+      <div class="membro">
+        <div class="avatar">
+          <span class="initial">DS</span>
+          <img src="/uploads/dev-douglas.jpg" alt="Foto de Douglas Santana" onerror="this.style.display='none'">
+        </div>
+        <h4>Douglas Santana</h4>
+      </div>
+    </div>
+    <div style="margin-top:2rem;" class="info-card">
+      <h3>🤝 Colaboração com a comunidade</h3>
+      <p style="font-size:.9rem;color:var(--cinza);line-height:1.7;">
+        O projeto foi desenvolvido em parceria com moradores de Ituiutaba e visitantes do parque, 
+        com entrevistas e testes realizados junto à comunidade. Também contamos com apoio de estudantes 
+        da Universidade Federal de Uberlândia (UFU), que desenvolvem projetos paralelos de preservação da área.
+        A comunidade participa ativamente através de registros e denúncias na plataforma.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAGE: IMAGENS ─────────────────────────────────── -->
+<div class="page" id="page-imagens">
+  <div class="page-header">
+    <h2>📸 Galeria de Imagens</h2>
+    <p>Imagens da biodiversidade registrada pela comunidade</p>
+  </div>
+  <div class="page-content">
+    <div id="galeria-imagens" class="galeria-grid">
+      <!-- imagens serão carregadas aqui -->
+    </div>
+    <div id="galeria-loading" style="text-align:center;padding:2rem;color:var(--cinza);">
+      Carregando imagens...
+    </div>
+    <div id="galeria-empty" style="text-align:center;padding:2rem;color:var(--cinza);display:none;">
+      📷 Nenhuma imagem registrada ainda. Seja o primeiro a contribuir!
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────
+let state = {
+  user: null,
+  registros: [],
+  denuncias: [],
+  tipoSelecionado: null,
+  usuarios: []
+};
+
+// ── NAVIGATION ───────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav ul li a').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('nav-'+id).classList.add('active');
+  if (id === 'registro') loadRegistros();
+  if (id === 'denuncia') loadDenuncias();
+  if (id === 'imagens') loadGaleria();
+  updateAvisos();
+  return false;
+}
+
+// ── AUTH ──────────────────────────────────────────────
+function openModal() { document.getElementById('modal-auth').classList.add('open'); }
+function closeModal() { document.getElementById('modal-auth').classList.remove('open'); }
+function switchTab(tab) {
+  document.querySelectorAll('.modal-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='cadastro')));
+  document.getElementById('tab-login').style.display = tab==='login' ? 'block' : 'none';
+  document.getElementById('tab-cadastro').style.display = tab==='cadastro' ? 'block' : 'none';
+}
+
+async function fazerLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const senha = document.getElementById('login-senha').value;
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, senha})
+    });
+    const data = await res.json();
+    if (res.ok) {
+      state.user = data.user;
+      loginSuccess();
+    } else {
+      toast(data.error, 'error');
+    }
+  } catch (e) {
+    toast('Erro de conexão', 'error');
+  }
+}
+
+async function fazerCadastro() {
+  const nome = document.getElementById('cad-nome').value.trim();
+  const sobrenome = document.getElementById('cad-sobrenome').value.trim();
+  const email = document.getElementById('cad-email').value.trim();
+  const senha = document.getElementById('cad-senha').value;
+  const tipo = document.getElementById('cad-tipo').value;
+  const fotoInput = document.getElementById('cad-foto');
+  
+  if (!nome || !email || senha.length < 6) { toast('Preencha todos os campos corretamente', 'error'); return; }
+  
+  try {
+    const formData = new FormData();
+    formData.append('nome', nome);
+    formData.append('sobrenome', sobrenome);
+    formData.append('email', email);
+    formData.append('senha', senha);
+    formData.append('tipo', tipo);
+    
+    if (fotoInput.files[0]) {
+      // Verificar tamanho do arquivo
+      if (fotoInput.files[0].size > 50 * 1024 * 1024) {
+        toast('Foto de perfil muito grande. O tamanho máximo permitido é 50MB.', 'error');
+        return;
+      }
+      formData.append('foto', fotoInput.files[0]);
+    }
+    
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (res.ok) {
+      state.user = data.user;
+      loginSuccess();
+    } else {
+      toast(data.error, 'error');
+    }
+  } catch (e) {
+    toast('Erro de conexão', 'error');
+  }
+}
+
+function loginSuccess() {
+  closeModal();
+  document.getElementById('user-info').style.display = 'flex';
+  document.getElementById('btn-abrir-login').style.display = 'none';
+  
+  const avatarEl = document.getElementById('user-avatar');
+  if (state.user.foto) {
+    avatarEl.innerHTML = `<img src="${state.user.foto}" alt="Foto de perfil" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+  } else {
+    avatarEl.textContent = state.user.nome[0].toUpperCase();
+  }
+  
+  document.getElementById('user-name-nav').textContent = state.user.nome;
+  updateStats();
+  updateAvisos();
+  toast(`Bem-vindo, ${state.user.nome}! 🌿`, 'success');
+}
+
+function sair() {
+  state.user = null;
+  document.getElementById('user-info').style.display = 'none';
+  document.getElementById('btn-abrir-login').style.display = 'block';
+  updateAvisos();
+  toast('Até logo!');
+}
+
+function updateAvisos() {
+  const logado = !!state.user;
+  ['registro-aviso','denuncia-aviso'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = logado ? 'none' : 'flex';
+  });
+}
+
+// ── REGISTROS ─────────────────────────────────────────
+function triggerUpload() { document.getElementById('file-input').click(); }
+
+function previewFotoPerfil(event) {
+  const file = event.target.files[0];
+  const previewContainer = document.getElementById('preview-foto-container');
+  const previewImg = document.getElementById('preview-foto');
+  
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      previewImg.src = e.target.result;
+      previewContainer.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    previewContainer.style.display = 'none';
+  }
+}
+
+function previewImage(event) {
+  const input = event.target;
+  const preview = document.getElementById('preview-img');
+  const uploadText = document.getElementById('upload-text');
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    
+    // Verificar tamanho do arquivo (50MB máximo)
+    if (file.size > 50 * 1024 * 1024) {
+      toast('Imagem muito grande. O tamanho máximo permitido é 50MB.', 'error');
+      input.value = ''; // Limpar seleção
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      uploadText.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    preview.src = '';
+    preview.style.display = 'none';
+    uploadText.style.display = 'block';
+  }
+}
+
+function getLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(position => {
+      document.getElementById('reg-lat').value = position.coords.latitude;
+      document.getElementById('reg-lng').value = position.coords.longitude;
+      toast('Localização obtida com sucesso!', 'success');
+    }, error => {
+      toast('Erro ao obter localização: ' + error.message, 'error');
+    });
+  } else {
+    toast('Geolocalização não suportada pelo navegador', 'error');
+  }
+}
+
+function getLocationDenuncia() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(position => {
+      document.getElementById('den-lat').value = position.coords.latitude;
+      document.getElementById('den-lng').value = position.coords.longitude;
+      toast('Localização obtida com sucesso!', 'success');
+    }, error => {
+      toast('Erro ao obter localização: ' + error.message, 'error');
+    });
+  } else {
+    toast('Geolocalização não suportada pelo navegador', 'error');
+  }
+}
+
+document.getElementById('registro-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!state.user) { 
+    toast('Você precisa estar logado para registrar!', 'error');
+    openModal(); 
+    return; 
+  }
+  
+  console.log('Enviando registro...', state.user);
+  const formData = new FormData(e.target);
+  formData.append('usuario_id', state.user.id);
+  
+  // Debug: mostrar dados sendo enviados
+  for (let [key, value] of formData.entries()) {
+    console.log(key, value);
+  }
+  
+  try {
+    const res = await fetch('/api/registros', { method: 'POST', body: formData });
+    console.log('Resposta HTTP:', res.status, res.statusText);
+    const data = await res.json();
+    console.log('Dados da resposta:', data);
+    
+    if (res.ok) {
+      toast('Espécie registrada com sucesso! 🦋', 'success');
+      e.target.reset();
+      document.getElementById('preview-img').style.display = 'none';
+      document.getElementById('upload-text').style.display = 'block';
+      loadRegistros();
+    } else {
+      toast(data.error || 'Erro no servidor', 'error');
+    }
+  } catch (e) {
+    console.error('Erro de conexão:', e);
+    toast('Erro de conexão - verifique o console', 'error');
+  }
+});
+
+async function loadRegistros() {
+  try {
+    const res = await fetch('/api/registros');
+    state.registros = await res.json();
+    renderRegistros();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function renderRegistros() {
+  const el = document.getElementById('lista-registros');
+  if (!el) return;
+  el.innerHTML = state.registros.map(r => `
+    <div class="registro-card">
+      <div class="registro-img">${r.img ? `<img src="${r.img}" alt="${r.especie}">` : (r.tipo==='fauna'?'🦎':'🌿')}</div>
+      <div class="registro-info">
+        <h4>${r.especie}</h4>
+        <div class="meta">📍 ${r.local} · ${r.data}</div>
+        <div class="meta user-info">
+          ${r.usuario_foto ? `<img src="${r.usuario_foto}" alt="Foto de ${r.usuario}" class="user-avatar-small">` : '👤'}
+          ${r.usuario}
+        </div>
+        ${r.desc ? `<div class="meta" style="margin-top:.3rem">${r.desc.substring(0,60)}${r.desc.length>60?'...':''}</div>` : ''}
+        <span class="tipo-badge ${r.tipo==='fauna'?'tipo-fauna':'tipo-flora'}">${r.tipo==='fauna'?'🦎 Fauna':'🌿 Flora'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── DENÚNCIAS ─────────────────────────────────────────
+function selecionarTipo(tipo) {
+  state.tipoSelecionado = tipo;
+  document.getElementById('tipo-incendio').className = 'tipo-btn' + (tipo==='incendio'?' selected-incendio':'');
+  document.getElementById('tipo-poluicao').className = 'tipo-btn' + (tipo==='poluicao'?' selected-poluicao':'');
+}
+
+document.getElementById('denuncia-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!state.user) { openModal(); return; }
+  if (!state.tipoSelecionado) { toast('Selecione o tipo de denúncia', 'error'); return; }
+  const formData = new FormData(e.target);
+  formData.append('tipo', state.tipoSelecionado);
+  formData.append('usuario_id', state.user.id);
+  try {
+    const res = await fetch('/api/denuncias', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (res.ok) {
+      toast('Denúncia registrada! As autoridades serão notificadas. 🚨', 'success');
+      e.target.reset();
+      state.tipoSelecionado = null;
+      selecionarTipo(null);
+      loadDenuncias();
+    } else {
+      toast(data.error, 'error');
+    }
+  } catch (e) {
+    toast('Erro de conexão', 'error');
+  }
+});
+
+async function loadDenuncias() {
+  try {
+    const res = await fetch('/api/denuncias');
+    state.denuncias = await res.json();
+    renderDenuncias();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function renderDenuncias() {
+  const el = document.getElementById('lista-denuncias');
+  if (!el) return;
+  el.innerHTML = state.denuncias.map(d => `
+    <div class="denuncia-item ${d.tipo}">
+      <div class="di-icon">${d.tipo==='incendio'?'🔥':'🏭'}</div>
+      <div style="flex:1">
+        <h4>${d.tipo==='incendio'?'Incêndio':'Poluição'} — ${d.local}</h4>
+        <p>${d.desc.substring(0,100)}${d.desc.length>100?'...':''}</p>
+        <p style="margin-top:.25rem">👤 ${d.usuario} · ${d.data} · Gravidade: ${d.gravidade}</p>
+        <span class="status status-${d.status}">${d.status==='aberto'?'⏳ Aberto':d.status==='andamento'?'🔄 Em andamento':'✅ Resolvido'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function ligar193() {
+  window.location.href = 'tel:193';
+  toast('📞 Ligando para o Corpo de Bombeiros (193)...', 'success');
+}
+
+function emailPrefeitura() {
+  const assunto = encodeURIComponent('Denúncia Ambiental — Parque do Goiabal');
+  const corpo = encodeURIComponent('Prezada Prefeitura de Ituiutaba,\n\nRegistro uma ocorrência ambiental no Parque do Goiabal:\n\n[Descreva o problema aqui]\n\nAtenciosamente.');
+  window.location.href = `mailto:prefeitura@ituiutaba.mg.gov.br?subject=${assunto}&body=${corpo}`;
+  toast('✉️ Abrindo cliente de e-mail...', 'success');
+}
+
+// ── STATS ─────────────────────────────────────────────
+async function updateStats() {
+  try {
+    const res = await fetch('/api/stats');
+    const stats = await res.json();
+    document.getElementById('stat-usuarios').textContent = stats.usuarios;
+    document.getElementById('stat-registros').textContent = stats.registros;
+    document.getElementById('stat-denuncias').textContent = stats.denuncias;
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// ── TOAST ─────────────────────────────────────────────
+function toast(msg, type='') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.innerHTML = `<span>${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</span> ${msg}`;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .5s'; setTimeout(()=>t.remove(),500); }, 3500);
+}
+
+// ── GALERIA ───────────────────────────────────────────
+async function loadGaleria() {
+  const loadingEl = document.getElementById('galeria-loading');
+  const emptyEl = document.getElementById('galeria-empty');
+  const gridEl = document.getElementById('galeria-imagens');
+  
+  loadingEl.style.display = 'block';
+  emptyEl.style.display = 'none';
+  gridEl.innerHTML = '';
+  
+  try {
+    const res = await fetch('/api/imagens');
+    const imagens = await res.json();
+    
+    loadingEl.style.display = 'none';
+    
+    if (imagens.length === 0) {
+      emptyEl.style.display = 'block';
+      return;
+    }
+    
+    gridEl.innerHTML = imagens.map(img => `
+      <div class="galeria-item">
+        <img src="${img.img}" alt="${img.especie}" class="galeria-img" loading="lazy">
+        <div class="galeria-info">
+          <h4>${img.especie}</h4>
+          <div class="galeria-meta">📍 ${img.local}</div>
+          <div class="galeria-meta">📅 ${img.data}</div>
+          <div class="galeria-meta">🏷️ ${img.tipo === 'fauna' ? 'Fauna' : 'Flora'}</div>
+          <div class="galeria-user">
+            ${img.usuario_foto ? `<img src="${img.usuario_foto}" alt="Foto de ${img.usuario}" class="galeria-user-avatar">` : '👤'}
+            <span>${img.usuario}</span>
+          </div>
+          ${img.desc ? `<div class="galeria-meta" style="margin-top:.5rem;font-style:italic;">"${img.desc}"</div>` : ''}
+          ${state.user && state.user.tipo === 'admin' ? `<button class="galeria-delete" onclick="excluirImagem(${img.id})">Excluir imagem</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+    
+  } catch (e) {
+    console.error('Erro ao carregar galeria:', e);
+    loadingEl.style.display = 'none';
+    toast('Erro ao carregar imagens', 'error');
+  }
+}
+
+async function excluirImagem(registroId) {
+  if (!state.user || state.user.tipo !== 'admin') {
+    toast('Apenas administradores podem excluir imagens.', 'error');
+    return;
+  }
+  try {
+    const res = await fetch(`/api/imagens/${registroId}`, {
+      method: 'DELETE',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ usuario_id: state.user.id })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      toast('Imagem excluída com sucesso.', 'success');
+      loadGaleria();
+    } else {
+      toast(data.error || 'Não foi possível excluir a imagem.', 'error');
+    }
+  } catch (e) {
+    console.error('Erro ao excluir imagem:', e);
+    toast('Erro ao excluir a imagem.', 'error');
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────
+updateStats();
+loadRegistros();
+loadDenuncias();
+document.getElementById('modal-auth').addEventListener('click', e => { if(e.target===document.getElementById('modal-auth')) closeModal(); });
+</script>
+</body>
+</html></content>
+<parameter name="filePath">c:\Users\luiso\OneDrive\Área de Trabalho\Jogos_Tabuleiro\vscode\Testes\index.html
