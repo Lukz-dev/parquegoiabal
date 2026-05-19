@@ -631,10 +631,11 @@ let state = {
 };
 
 const DEFAULT_API_BASE_URL = 'http://127.0.0.1:5000';
-const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+const API_BASE_URL = window.location.protocol === 'file:'
   ? DEFAULT_API_BASE_URL
-  : 'https://parquegoiabal.onrender.com';
-// Se você usar outro serviço, ajuste o endereço acima para o URL público do seu backend.
+  : window.location.origin;
+// Quando aberto direto do sistema de arquivos (file://), ele usa o servidor local.
+// Quando acessado via HTTP(S), usa o mesmo host/origem da página.
 
 function apiUrl(path) {
   return `${API_BASE_URL}${path}`;

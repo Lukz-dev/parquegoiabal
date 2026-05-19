@@ -12,13 +12,13 @@ CORS(app, origins="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["*"])
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///goiabal.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'uploads'
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB
 
-db = SQLAlchemy(app)
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
+db = SQLAlchemy(app)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -130,7 +130,8 @@ def register():
                     return jsonify({'error': 'Foto de perfil muito grande. O tamanho máximo permitido é 50MB.'}), 413
                 
                 filename = secure_filename(file.filename)
-                foto_path = os.path.join(app.config['UPLOAD_FOLDER'], f"profile_{filename}")
+                filename = f"profile_{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}_{filename}"
+                foto_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 try:
                     file.save(foto_path)
                     print(f"✓ Foto salva em: {foto_path}")
@@ -205,6 +206,7 @@ def registros():
                         return jsonify({'error': 'Imagem muito grande. O tamanho máximo permitido é 50MB.'}), 413
                     
                     filename = secure_filename(file.filename)
+                    filename = f"registro_{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}_{filename}"
                     img_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                     file.save(img_path)
             registro = Registro(especie=especie, tipo=tipo, local=local, desc=desc, img=img_path, lat=lat, lng=lng, usuario_id=usuario_id)
