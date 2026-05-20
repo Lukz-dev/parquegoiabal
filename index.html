@@ -48,6 +48,72 @@
   .btn-sair { background:none; border:1px solid rgba(255,255,255,.3); color:rgba(255,255,255,.7); padding:.35rem .7rem; border-radius:var(--radius-sm); font-size:.8rem; cursor:pointer; transition:.2s; }
   .btn-sair:hover { border-color:#fff; color:#fff; }
 
+  .nav-toggle {
+    display:none;
+    background:none;
+    border:none;
+    color:#fff;
+    font-size:1.45rem;
+    cursor:pointer;
+    padding:.35rem .5rem;
+  }
+
+  /* ── MOBILE ───────────────────────────────────────── */
+  @media(max-width:900px) {
+    nav { flex-wrap: wrap; padding:0 1rem; height:auto; gap:.5rem; }
+    .nav-toggle { display:block; }
+    nav ul {
+      display:none;
+      position:absolute;
+      top:64px;
+      left:0;
+      right:0;
+      background:var(--escuro);
+      flex-direction:column;
+      padding:1rem 1rem 1.25rem;
+      gap:.25rem;
+      border-top:1px solid rgba(255,255,255,.08);
+      z-index:100;
+      transition: max-height .25s ease, opacity .25s ease;
+      max-height:0;
+      overflow:hidden;
+      opacity:0;
+    }
+    nav.open ul {
+      display:flex;
+      max-height:500px;
+      opacity:1;
+    }
+    nav ul li a { padding:.75rem 1rem; }
+    .nav-user { width:100%; justify-content:flex-end; margin-top:.5rem; }
+    .hero { padding:3.5rem 1.25rem 3rem; }
+    .hero h1 { font-size:2.2rem; }
+    .hero p { font-size:1rem; max-width:100%; }
+    .hero-btns { gap:.75rem; }
+    .stats-bar { padding:.5rem 0; }
+    .stat-item { padding:1rem 1rem; }
+    .home-grid { padding:2rem 1rem; }
+    .page-content { padding:1.5rem 1rem; }
+    .upload-zone { padding:2.5rem 1.5rem; }
+    .modal { width:min(100%, 95vw); margin:1rem; }
+    .toast-container { bottom:1rem; right:1rem; left:1rem; }
+  }
+
+  @media(max-width:640px) {
+    .two-col { grid-template-columns:1fr; }
+    .hero { padding:2.5rem 1rem 2rem; }
+    .hero h1 { font-size:1.9rem; }
+    .hero p { font-size:.95rem; }
+    .home-grid { grid-template-columns:1fr; gap:1rem; padding:1.5rem 1rem; }
+    .stat-item { width:100%; border-right:none; }
+    .page-header { padding:1.8rem 1rem 1.5rem; }
+    .registro-img { height:140px; }
+    .galeria-img { height:170px; }
+    .info-card { padding:1.2rem; }
+    .btn-full, .btn-login { font-size:.95rem; }
+    .registro-card, .galeria-item, .denuncia-item { border-radius:14px; }
+  }
+
   /* ── PAGES ───────────────────────────────────────── */
   .page { display:none; }
   .page.active { display:block; }
@@ -254,6 +320,7 @@
     <div class="logo-icon">🌿</div>
     Goiabal
   </a>
+  <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menu" onclick="toggleNav()">☰</button>
   <ul>
     <li><a href="#" onclick="showPage('home')" class="active" id="nav-home">🏠 Início</a></li>
     <li><a href="#" onclick="showPage('registro')" id="nav-registro">🦋 Biodiversidade</a></li>
@@ -641,8 +708,19 @@ function apiUrl(path) {
   return `${API_BASE_URL}${path}`;
 }
 
+function toggleNav() {
+  const nav = document.querySelector('nav');
+  nav.classList.toggle('open');
+}
+
+function closeMobileNav() {
+  const nav = document.querySelector('nav');
+  if (nav.classList.contains('open')) nav.classList.remove('open');
+}
+
 // ── NAVIGATION ───────────────────────────────────────
 function showPage(id) {
+  closeMobileNav();
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('nav ul li a').forEach(a => a.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
