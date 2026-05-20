@@ -255,16 +255,34 @@
 
   /* ── GALERIA ─────────────────────────────────────── */
   .galeria-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1.5rem; margin-top:2rem; }
-  .galeria-item { background:#fff; border-radius:var(--radius); overflow:hidden; box-shadow:var(--sombra); transition:.25s; }
-  .galeria-item:hover { transform:translateY(-3px); box-shadow:0 8px 32px rgba(45,106,79,.15); }
-  .galeria-img { width:100%; height:200px; object-fit:cover; }
+  .galeria-item { background:#fff; border-radius:var(--radius); overflow:hidden; box-shadow:var(--sombra); transition:.3s ease, transform .3s ease; opacity:0; transform:translateY(20px); }
+  .galeria-item.visible { opacity:1; transform:translateY(0); }
+  .galeria-item:hover { transform:translateY(-3px); box-shadow:0 10px 36px rgba(45,106,79,.18); }
+  .galeria-img { width:100%; height:220px; object-fit:cover; display:block; }
   .galeria-info { padding:1rem; }
   .galeria-info h4 { font-size:1rem; font-weight:700; margin-bottom:.5rem; }
-  .galeria-meta { font-size:.8rem; color:var(--cinza); margin-bottom:.25rem; display:flex; align-items:center; gap:.3rem; }
+  .galeria-meta { font-size:.8rem; color:var(--cinza); margin-bottom:.25rem; display:flex; align-items:center; gap:.3rem; flex-wrap:wrap; }
   .galeria-user { display:flex; align-items:center; gap:.4rem; margin-top:.5rem; }
   .galeria-user-avatar { width:24px; height:24px; border-radius:50%; object-fit:cover; border:1px solid var(--verde-claro); }
+  .galeria-reactions { display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.75rem; }
+  .reaction-btn { padding:.55rem .85rem; border-radius:999px; border:1px solid rgba(82,183,136,.3); background:#f3fff6; color:#20603b; cursor:pointer; font-size:.85rem; transition:.2s; display:inline-flex; align-items:center; gap:.35rem; }
+  .reaction-btn:hover { background:#dcf7e8; }
+  .reaction-count { font-weight:700; }
   .galeria-delete { margin-top:1rem; display:inline-flex; align-items:center; justify-content:center; gap:.4rem; padding:.55rem .9rem; border-radius:999px; border:1px solid rgba(220,38,38,.2); background:#fff5f5; color:#b91c1c; cursor:pointer; transition:.2s; font-weight:700; font-size:.85rem; }
   .galeria-delete:hover { background:#fee2e2; border-color:#fca5a5; }
+  .featured-card { background:#fff; border-radius:var(--radius); padding:1.5rem; box-shadow:var(--sombra); margin-bottom:1.5rem; display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; align-items:center; }
+  .featured-card img { width:100%; border-radius:var(--radius-sm); height:240px; object-fit:cover; }
+  .featured-content h3 { margin:0 0 .8rem; font-size:1.45rem; }
+  .featured-content p { color:var(--cinza); line-height:1.7; }
+  .featured-tags { display:flex; flex-wrap:wrap; gap:.65rem; margin-top:1rem; }
+  .featured-badge { background:rgba(45,106,79,.1); color:var(--verde); padding:.45rem .75rem; border-radius:999px; font-size:.82rem; font-weight:700; }
+  .gallery-topbar { display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+  .gallery-topbar .small-note { color:var(--cinza); font-size:.92rem; }
+  .map-preview { background:#e7f4eb; border-radius:var(--radius); padding:1rem; display:flex; flex-direction:column; gap:.75rem; border:1px solid rgba(45,106,79,.15); }
+  .map-preview h4 { margin:0; font-size:1rem; }
+  .map-preview p { margin:0; color:var(--cinza); font-size:.9rem; }
+  .map-frame { width:100%; min-height:220px; border-radius:var(--radius-sm); background:linear-gradient(135deg,#d8f3dc,#e7f4eb); display:flex; align-items:center; justify-content:center; color:var(--verde); font-weight:700; letter-spacing:.02em; border:1px dashed rgba(45,106,79,.35); }
+  @media(max-width:900px) { .featured-card { grid-template-columns:1fr; } }
 
   /* ── TOAST ───────────────────────────────────────── */
   .toast-container { position:fixed; bottom:2rem; right:2rem; z-index:300; display:flex; flex-direction:column; gap:.5rem; }
@@ -672,6 +690,25 @@
     <p>Imagens da biodiversidade registrada pela comunidade</p>
   </div>
   <div class="page-content">
+    <div class="gallery-topbar">
+      <div>
+        <div class="small-note">Destaque do Parque</div>
+        <div class="featured-card" id="featured-card" style="display:none;">
+          <img id="featured-img" src="" alt="Foto do dia">
+          <div class="featured-content">
+            <h3 id="featured-title">Foto do dia</h3>
+            <div class="featured-tags" id="featured-tags"></div>
+            <p id="featured-desc">A foto escolhida por seu registro especial é um verdadeiro convite para explorar o Goiabal.</p>
+            <p class="small-note" id="featured-note">Curiosidade: cada foto traz uma história diferente.</p>
+          </div>
+        </div>
+      </div>
+      <div class="map-preview">
+        <h4>Mapa de registros</h4>
+        <p>Veja onde o pessoal está registrando mais espécies.</p>
+        <div class="map-frame">Mapa de pontos em breve</div>
+      </div>
+    </div>
     <div id="galeria-imagens" class="galeria-grid">
       <!-- imagens serão carregadas aqui -->
     </div>
@@ -928,13 +965,17 @@ function previewImage(event) {
   const input = event.target;
   const preview = document.getElementById('preview-img');
   const uploadText = document.getElementById('upload-text');
+  if (!preview || !uploadText || !input) return;
+
   if (input.files && input.files[0]) {
     const file = input.files[0];
     
-    // Verificar tamanho do arquivo (50MB máximo)
     if (file.size > 50 * 1024 * 1024) {
       toast('Imagem muito grande. O tamanho máximo permitido é 50MB.', 'error');
-      input.value = ''; // Limpar seleção
+      input.value = '';
+      preview.src = '';
+      preview.style.display = 'none';
+      uploadText.style.display = 'block';
       return;
     }
     
@@ -943,6 +984,13 @@ function previewImage(event) {
       preview.src = e.target.result;
       preview.style.display = 'block';
       uploadText.style.display = 'none';
+    };
+    reader.onerror = function() {
+      toast('Não foi possível carregar a imagem.', 'error');
+      input.value = '';
+      preview.src = '';
+      preview.style.display = 'none';
+      uploadText.style.display = 'block';
     };
     reader.readAsDataURL(file);
   } else {
@@ -1130,6 +1178,70 @@ async function updateStats() {
   }
 }
 
+function getStoredGalleryReactions() {
+  try {
+    return JSON.parse(localStorage.getItem('galleryReactions') || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function saveGalleryReactions(data) {
+  localStorage.setItem('galleryReactions', JSON.stringify(data));
+}
+
+function getReactionsForImage(imageId) {
+  const reactions = getStoredGalleryReactions();
+  return reactions[imageId] || { verde: 0, amor: 0, estrela: 0 };
+}
+
+function addReaction(imageId, type) {
+  const reactions = getStoredGalleryReactions();
+  const current = reactions[imageId] || { verde: 0, amor: 0, estrela: 0 };
+  if (type === '🌿') current.verde += 1;
+  if (type === '😍') current.amor += 1;
+  if (type === '⭐') current.estrela += 1;
+  reactions[imageId] = current;
+  saveGalleryReactions(reactions);
+  const card = document.querySelector(`.reaction-btn[data-image="${imageId}"][data-type="${type}"] span`);
+  if (card) card.textContent = type === '🌿' ? current.verde : type === '😍' ? current.amor : current.estrela;
+  toast('Você reagiu com ' + type + '!', 'success');
+}
+
+function getRandomCuriosidade() {
+  const curiosidades = [
+    'A cada clique, você ajuda a mapear a biodiversidade local.',
+    'O Parque do Goiabal já registrou centenas de espécies nativas nas imagens.',
+    'As melhores fotos são aquelas que mostram a relação entre fauna e flora.',
+    'Olhe o mapa e imagine quais trilhas ainda precisam de novas descobertas.',
+    'Todo registro é uma pista para entender melhor o ecossistema do parque.'
+  ];
+  return curiosidades[Math.floor(Math.random() * curiosidades.length)];
+}
+
+function renderFeaturedImage(imagens) {
+  const featuredCard = document.getElementById('featured-card');
+  const featuredImg = document.getElementById('featured-img');
+  const featuredTitle = document.getElementById('featured-title');
+  const featuredTags = document.getElementById('featured-tags');
+  const featuredDesc = document.getElementById('featured-desc');
+  const featuredNote = document.getElementById('featured-note');
+
+  const destaque = imagens[Math.floor(Math.random() * imagens.length)];
+  if (!destaque) return;
+
+  featuredImg.src = destaque.img;
+  featuredTitle.textContent = `${destaque.especie} — Destaque do dia`;
+  featuredTags.innerHTML = `
+    <span class="featured-badge">${destaque.tipo === 'fauna' ? 'Fauna' : 'Flora'}</span>
+    <span class="featured-badge">${destaque.local}</span>
+    <span class="featured-badge">${destaque.data}</span>
+  `;
+  featuredDesc.textContent = destaque.desc ? destaque.desc : 'Um registro especial da comunidade do Goiabal.';
+  featuredNote.textContent = `Curiosidade: ${getRandomCuriosidade()}`;
+  featuredCard.style.display = 'grid';
+}
+
 // ── TOAST ─────────────────────────────────────────────
 function toast(msg, type='') {
   const c = document.getElementById('toast-container');
@@ -1160,8 +1272,12 @@ async function loadGaleria() {
       emptyEl.style.display = 'block';
       return;
     }
+
+    renderFeaturedImage(imagens);
     
-    gridEl.innerHTML = imagens.map(img => `
+    const html = imagens.map(img => {
+      const reactions = getReactionsForImage(img.id);
+      return `
       <div class="galeria-item">
         <img src="${img.img}" alt="${img.especie}" class="galeria-img" loading="lazy">
         <div class="galeria-info">
@@ -1174,11 +1290,22 @@ async function loadGaleria() {
             <span>${img.usuario}</span>
           </div>
           ${img.desc ? `<div class="galeria-meta" style="margin-top:.5rem;font-style:italic;">"${img.desc}"</div>` : ''}
+          <div class="galeria-reactions">
+            <button class="reaction-btn" data-image="${img.id}" data-type="🌿" onclick="addReaction(${img.id}, '🌿')">🌿 <span class="reaction-count">${reactions.verde}</span></button>
+            <button class="reaction-btn" data-image="${img.id}" data-type="😍" onclick="addReaction(${img.id}, '😍')">😍 <span class="reaction-count">${reactions.amor}</span></button>
+            <button class="reaction-btn" data-image="${img.id}" data-type="⭐" onclick="addReaction(${img.id}, '⭐')">⭐ <span class="reaction-count">${reactions.estrela}</span></button>
+          </div>
           ${state.user && state.user.tipo === 'admin' ? `<button class="galeria-delete" onclick="excluirImagem(${img.id})">Excluir imagem</button>` : ''}
         </div>
       </div>
-    `).join('');
-    
+    `;
+    }).join('');
+
+    gridEl.innerHTML = html;
+    Array.from(gridEl.children).forEach((card, index) => {
+      setTimeout(() => card.classList.add('visible'), index * 80);
+    });
+
   } catch (e) {
     console.error('Erro ao carregar galeria:', e);
     loadingEl.style.display = 'none';
