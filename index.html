@@ -137,6 +137,7 @@
   .btn-primary:hover { background:#3da870; transform:translateY(-1px); }
   .btn-secondary { background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.3); padding:.75rem 1.75rem; border-radius:var(--radius); font-family:'Syne',sans-serif; font-weight:600; font-size:1rem; cursor:pointer; transition:.2s; }
   .btn-secondary:hover { background:rgba(255,255,255,.2); }
+  .hero-note { margin-top:1rem; color:rgba(255,255,255,.85); font-size:.95rem; max-width:520px; margin-left:auto; margin-right:auto; }
 
   .stats-bar { background:#fff; display:flex; justify-content:center; gap:0; flex-wrap:wrap; border-bottom:1px solid #eee; }
   .stat-item { padding:1.5rem 2.5rem; text-align:center; border-right:1px solid #eee; }
@@ -191,9 +192,20 @@
   .page-content { max-width:1100px; margin:0 auto; padding:2rem; }
 
   .upload-zone {
-    border:2.5px dashed var(--verde-claro); border-radius:var(--radius); padding:3rem;
-    text-align:center; cursor:pointer; transition:.2s; background:var(--verde-palido);
+    border:2.5px dashed var(--verde-claro);
+    border-radius:var(--radius);
+    padding:2.5rem;
+    min-height:260px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:1rem;
+    cursor:pointer;
+    transition:.2s;
+    background:var(--verde-palido);
     position:relative;
+    overflow:hidden;
   }
   .upload-zone:hover { background:#c8ecd1; border-color:var(--verde); }
   .upload-zone input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; }
@@ -267,6 +279,7 @@
   .galeria-reactions { display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.75rem; }
   .reaction-btn { padding:.55rem .85rem; border-radius:999px; border:1px solid rgba(82,183,136,.3); background:#f3fff6; color:#20603b; cursor:pointer; font-size:.85rem; transition:.2s; display:inline-flex; align-items:center; gap:.35rem; }
   .reaction-btn:hover { background:#dcf7e8; }
+  .reaction-btn.reacted, .reaction-btn:disabled { opacity:.7; cursor:not-allowed; background:#d8f3dc; }
   .reaction-count { font-weight:700; }
   .galeria-delete { margin-top:1rem; display:inline-flex; align-items:center; justify-content:center; gap:.4rem; padding:.55rem .9rem; border-radius:999px; border:1px solid rgba(220,38,38,.2); background:#fff5f5; color:#b91c1c; cursor:pointer; transition:.2s; font-weight:700; font-size:.85rem; }
   .galeria-delete:hover { background:#fee2e2; border-color:#fca5a5; }
@@ -281,7 +294,8 @@
   .map-preview { background:#e7f4eb; border-radius:var(--radius); padding:1rem; display:flex; flex-direction:column; gap:.75rem; border:1px solid rgba(45,106,79,.15); }
   .map-preview h4 { margin:0; font-size:1rem; }
   .map-preview p { margin:0; color:var(--cinza); font-size:.9rem; }
-  .map-frame { width:100%; min-height:220px; border-radius:var(--radius-sm); background:linear-gradient(135deg,#d8f3dc,#e7f4eb); display:flex; align-items:center; justify-content:center; color:var(--verde); font-weight:700; letter-spacing:.02em; border:1px dashed rgba(45,106,79,.35); }
+  .map-frame { width:100%; min-height:260px; border-radius:var(--radius-sm); background:linear-gradient(135deg,#d8f3dc,#e7f4eb); display:flex; align-items:center; justify-content:center; color:var(--verde); font-weight:700; letter-spacing:.02em; border:1px dashed rgba(45,106,79,.35); }
+  #gallery-map { width:100%; min-height:260px; border-radius:var(--radius-sm); }
   @media(max-width:900px) { .featured-card { grid-template-columns:1fr; } }
 
   /* ── TOAST ───────────────────────────────────────── */
@@ -329,6 +343,8 @@
 
   .map-marker { font-size: 24px; text-align: center; }
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-o0rW4s8ZrBAdA+g0ygXxyhWb5D8XAg6Kb1C4mJUtqC0=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-oHo+E2vkb3wH+wucPyge/CycYyQ7Ys5GV3YLE2zeM2M=" crossorigin=""></script>
 </head>
 <body>
 
@@ -415,7 +431,9 @@
     <div class="hero-btns">
       <button class="btn-primary" onclick="showPage('registro')">🦋 Registrar espécie</button>
       <button class="btn-secondary" onclick="showPage('denuncia')">🚨 Fazer denúncia</button>
+      <a class="btn-secondary" href="https://forms.gle/rGLzYDwTxeYZ7FRu8" target="_blank" rel="noopener">💬 Enviar feedback</a>
     </div>
+    <p class="hero-note">Ajude a melhorar o site deixando sua opinião ou sugestão no formulário de feedback.</p>
   </div>
   <div class="stats-bar">
     <div class="stat-item"><div class="stat-num" id="stat-usuarios">0</div><div class="stat-label">Usuários cadastrados</div></div>
@@ -467,7 +485,7 @@
         <form id="registro-form" enctype="multipart/form-data">
           <label class="upload-zone" for="file-input">
             <input type="file" id="file-input" name="img" accept="image/*" capture="environment" onchange="previewImage(event)">
-            <img id="preview-img" src="" alt="preview">
+            <img id="preview-img" alt="preview" style="display:none;">
             <div id="upload-text">
               <div class="upload-icon">📷</div>
               <h4>Clique para adicionar foto</h4>
@@ -706,7 +724,7 @@
       <div class="map-preview">
         <h4>Mapa de registros</h4>
         <p>Veja onde o pessoal está registrando mais espécies.</p>
-        <div class="map-frame">Mapa de pontos em breve</div>
+        <div id="gallery-map" class="map-frame">Mapa de pontos em breve</div>
       </div>
     </div>
     <div id="galeria-imagens" class="galeria-grid">
@@ -733,8 +751,11 @@ let state = {
   tipoSelecionado: null,
   usuarios: []
 };
+let galleryMap = null;
+let galleryMarkers = [];
 
 const STORAGE_KEY = 'parquegoiabal_user';
+const FEATURED_IMAGE_KEY = 'galleryFeaturedImageId';
 const DEFAULT_API_BASE_URL = 'http://127.0.0.1:5000';
 const API_BASE_URL = window.location.protocol === 'file:'
   ? DEFAULT_API_BASE_URL
@@ -744,6 +765,64 @@ const API_BASE_URL = window.location.protocol === 'file:'
 
 function apiUrl(path) {
   return `${API_BASE_URL}${path}`;
+}
+
+function getFeaturedImageId() {
+  return localStorage.getItem(FEATURED_IMAGE_KEY);
+}
+
+function setFeaturedImageId(id) {
+  localStorage.setItem(FEATURED_IMAGE_KEY, String(id));
+}
+
+function clearFeaturedImageId() {
+  localStorage.removeItem(FEATURED_IMAGE_KEY);
+}
+
+function initGalleryMap() {
+  const mapEl = document.getElementById('gallery-map');
+  if (!mapEl || galleryMap) return;
+  mapEl.textContent = '';
+  galleryMap = L.map('gallery-map', { zoomControl: false }).setView([-18.1147, -48.2859], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(galleryMap);
+}
+
+function updateGalleryMap(imagens) {
+  initGalleryMap();
+  if (!galleryMap) return;
+  galleryMarkers.forEach(marker => galleryMap.removeLayer(marker));
+  galleryMarkers = [];
+
+  const points = imagens
+    .filter(img => img.lat && img.lng)
+    .map(img => ({
+      lat: Number(img.lat),
+      lng: Number(img.lng),
+      title: img.especie,
+      local: img.local,
+      tipo: img.tipo,
+      desc: img.desc
+    }))
+    .filter(pt => !Number.isNaN(pt.lat) && !Number.isNaN(pt.lng));
+
+  if (points.length === 0) {
+    const mapEl = document.getElementById('gallery-map');
+    if (mapEl) mapEl.textContent = 'Nenhum registro com coordenadas disponíveis.';
+    return;
+  }
+
+  const bounds = [];
+  points.forEach(point => {
+    const marker = L.marker([point.lat, point.lng]).addTo(galleryMap);
+    marker.bindPopup(`<strong>${point.title}</strong><br>${point.local}<br>${point.tipo === 'fauna' ? '🦎 Fauna' : '🌿 Flora'}`);
+    galleryMarkers.push(marker);
+    bounds.push([point.lat, point.lng]);
+  });
+  galleryMap.fitBounds(bounds, { padding: [40, 40] });
+  setTimeout(() => { galleryMap.invalidateSize(); }, 200);
 }
 
 function saveUserToStorage() {
@@ -988,13 +1067,13 @@ function previewImage(event) {
     reader.onerror = function() {
       toast('Não foi possível carregar a imagem.', 'error');
       input.value = '';
-      preview.src = '';
+      preview.removeAttribute('src');
       preview.style.display = 'none';
       uploadText.style.display = 'block';
     };
     reader.readAsDataURL(file);
   } else {
-    preview.src = '';
+    preview.removeAttribute('src');
     preview.style.display = 'none';
     uploadText.style.display = 'block';
   }
@@ -1190,21 +1269,49 @@ function saveGalleryReactions(data) {
   localStorage.setItem('galleryReactions', JSON.stringify(data));
 }
 
-function getReactionsForImage(imageId) {
+function getImageReactions(imageId) {
   const reactions = getStoredGalleryReactions();
-  return reactions[imageId] || { verde: 0, amor: 0, estrela: 0 };
+  return reactions[imageId] || { counts: { verde: 0, amor: 0, estrela: 0 }, users: {} };
+}
+
+function getReactionsForImage(imageId) {
+  return getImageReactions(imageId).counts;
+}
+
+function getUserReactionForImage(imageId) {
+  const imageReactions = getImageReactions(imageId);
+  return state.user ? imageReactions.users[state.user.id] : null;
 }
 
 function addReaction(imageId, type) {
+  if (!state.user) {
+    toast('Faça login para reagir.', 'error');
+    return;
+  }
+
   const reactions = getStoredGalleryReactions();
-  const current = reactions[imageId] || { verde: 0, amor: 0, estrela: 0 };
-  if (type === '🌿') current.verde += 1;
-  if (type === '😍') current.amor += 1;
-  if (type === '⭐') current.estrela += 1;
-  reactions[imageId] = current;
+  const imageReactions = reactions[imageId] || { counts: { verde: 0, amor: 0, estrela: 0 }, users: {} };
+  const existing = imageReactions.users[state.user.id];
+
+  if (existing) {
+    toast('Você já reagiu a esta imagem.', 'error');
+    return;
+  }
+
+  if (type === '🌿') imageReactions.counts.verde += 1;
+  if (type === '😍') imageReactions.counts.amor += 1;
+  if (type === '⭐') imageReactions.counts.estrela += 1;
+  imageReactions.users[state.user.id] = type;
+  reactions[imageId] = imageReactions;
   saveGalleryReactions(reactions);
+
+  document.querySelectorAll(`.reaction-btn[data-image="${imageId}"]`).forEach(button => {
+    button.disabled = true;
+    button.classList.add('reacted');
+  });
+
   const card = document.querySelector(`.reaction-btn[data-image="${imageId}"][data-type="${type}"] span`);
-  if (card) card.textContent = type === '🌿' ? current.verde : type === '😍' ? current.amor : current.estrela;
+  if (card) card.textContent = type === '🌿' ? imageReactions.counts.verde : type === '😍' ? imageReactions.counts.amor : imageReactions.counts.estrela;
   toast('Você reagiu com ' + type + '!', 'success');
 }
 
@@ -1227,7 +1334,14 @@ function renderFeaturedImage(imagens) {
   const featuredDesc = document.getElementById('featured-desc');
   const featuredNote = document.getElementById('featured-note');
 
-  const destaque = imagens[Math.floor(Math.random() * imagens.length)];
+  const selectedId = getFeaturedImageId();
+  let destaque = null;
+  if (selectedId) {
+    destaque = imagens.find(img => String(img.id) === selectedId);
+  }
+  if (!destaque) {
+    destaque = imagens[Math.floor(Math.random() * imagens.length)];
+  }
   if (!destaque) return;
 
   featuredImg.src = destaque.img;
@@ -1240,6 +1354,26 @@ function renderFeaturedImage(imagens) {
   featuredDesc.textContent = destaque.desc ? destaque.desc : 'Um registro especial da comunidade do Goiabal.';
   featuredNote.textContent = `Curiosidade: ${getRandomCuriosidade()}`;
   featuredCard.style.display = 'grid';
+}
+
+function setFeaturedImage(imageId) {
+  if (!state.user || state.user.tipo !== 'admin') {
+    toast('Apenas administradores podem definir o destaque.', 'error');
+    return;
+  }
+  setFeaturedImageId(imageId);
+  toast('Imagem definida como destaque com sucesso!', 'success');
+  loadGaleria();
+}
+
+function removeFeaturedImage() {
+  if (!state.user || state.user.tipo !== 'admin') {
+    toast('Apenas administradores podem remover o destaque.', 'error');
+    return;
+  }
+  clearFeaturedImageId();
+  toast('Destaque removido.', 'success');
+  loadGaleria();
 }
 
 // ── TOAST ─────────────────────────────────────────────
@@ -1273,15 +1407,22 @@ async function loadGaleria() {
       return;
     }
 
+    const selectedId = getFeaturedImageId();
     renderFeaturedImage(imagens);
+    updateGalleryMap(imagens);
     
     const html = imagens.map(img => {
       const reactions = getReactionsForImage(img.id);
+      const userReaction = getUserReactionForImage(img.id);
+      const disabledAttr = userReaction ? 'disabled' : '';
+      const reactedClass = userReaction ? ' reacted' : '';
+      const isFeatured = selectedId && String(selectedId) === String(img.id);
       return `
       <div class="galeria-item">
         <img src="${img.img}" alt="${img.especie}" class="galeria-img" loading="lazy">
         <div class="galeria-info">
           <h4>${img.especie}</h4>
+          ${isFeatured ? `<div class="featured-badge" style="margin-bottom:.5rem;">Destaque escolhido</div>` : ''}
           <div class="galeria-meta">📍 ${img.local}</div>
           <div class="galeria-meta">📅 ${img.data}</div>
           <div class="galeria-meta">🏷️ ${img.tipo === 'fauna' ? 'Fauna' : 'Flora'}</div>
@@ -1291,11 +1432,15 @@ async function loadGaleria() {
           </div>
           ${img.desc ? `<div class="galeria-meta" style="margin-top:.5rem;font-style:italic;">"${img.desc}"</div>` : ''}
           <div class="galeria-reactions">
-            <button class="reaction-btn" data-image="${img.id}" data-type="🌿" onclick="addReaction(${img.id}, '🌿')">🌿 <span class="reaction-count">${reactions.verde}</span></button>
-            <button class="reaction-btn" data-image="${img.id}" data-type="😍" onclick="addReaction(${img.id}, '😍')">😍 <span class="reaction-count">${reactions.amor}</span></button>
-            <button class="reaction-btn" data-image="${img.id}" data-type="⭐" onclick="addReaction(${img.id}, '⭐')">⭐ <span class="reaction-count">${reactions.estrela}</span></button>
+            <button class="reaction-btn${reactedClass}" ${disabledAttr} data-image="${img.id}" data-type="🌿" onclick="addReaction(${img.id}, '🌿')">🌿 <span class="reaction-count">${reactions.verde}</span></button>
+            <button class="reaction-btn${reactedClass}" ${disabledAttr} data-image="${img.id}" data-type="😍" onclick="addReaction(${img.id}, '😍')">😍 <span class="reaction-count">${reactions.amor}</span></button>
+            <button class="reaction-btn${reactedClass}" ${disabledAttr} data-image="${img.id}" data-type="⭐" onclick="addReaction(${img.id}, '⭐')">⭐ <span class="reaction-count">${reactions.estrela}</span></button>
           </div>
           ${state.user && state.user.tipo === 'admin' ? `<button class="galeria-delete" onclick="excluirImagem(${img.id})">Excluir imagem</button>` : ''}
+          ${state.user && state.user.tipo === 'admin' ? `<div style="display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap;">
+              <button class="btn-full" style="background:#1a5f30;border:none;min-width:170px;" onclick="setFeaturedImage(${img.id})">${selectedId && String(selectedId) === String(img.id) ? 'Destaque atual' : 'Definir destaque'}</button>
+              ${selectedId && String(selectedId) === String(img.id) ? `<button class="btn-full" style="background:#a83c3c;border:none;min-width:170px;" onclick="removeFeaturedImage()">Remover destaque</button>` : ''}
+            </div>` : ''}
         </div>
       </div>
     `;
