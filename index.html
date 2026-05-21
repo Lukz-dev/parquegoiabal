@@ -767,6 +767,11 @@ function apiUrl(path) {
   return `${API_BASE_URL}${path}`;
 }
 
+function resolveMediaUrl(path) {
+  if (!path) return '';
+  return path.startsWith('/') ? apiUrl(path) : path;
+}
+
 function getFeaturedImageId() {
   return localStorage.getItem(FEATURED_IMAGE_KEY);
 }
@@ -1160,12 +1165,12 @@ function renderRegistros() {
   if (!el) return;
   el.innerHTML = state.registros.map(r => `
     <div class="registro-card">
-      <div class="registro-img">${r.img ? `<img src="${r.img}" alt="${r.especie}">` : (r.tipo==='fauna'?'🦎':'🌿')}</div>
+      <div class="registro-img">${r.img ? `<img src="${resolveMediaUrl(r.img)}" alt="${r.especie}">` : (r.tipo==='fauna'?'🦎':'🌿')}</div>
       <div class="registro-info">
         <h4>${r.especie}</h4>
         <div class="meta">📍 ${r.local} · ${r.data}</div>
         <div class="meta user-info">
-          ${r.usuario_foto ? `<img src="${r.usuario_foto}" alt="Foto de ${r.usuario}" class="user-avatar-small">` : '👤'}
+          ${r.usuario_foto ? `<img src="${resolveMediaUrl(r.usuario_foto)}" alt="Foto de ${r.usuario}" class="user-avatar-small">` : '👤'}
           ${r.usuario}
         </div>
         ${r.desc ? `<div class="meta" style="margin-top:.3rem">${r.desc.substring(0,60)}${r.desc.length>60?'...':''}</div>` : ''}
@@ -1344,7 +1349,7 @@ function renderFeaturedImage(imagens) {
   }
   if (!destaque) return;
 
-  featuredImg.src = destaque.img;
+  featuredImg.src = resolveMediaUrl(destaque.img);
   featuredTitle.textContent = `${destaque.especie} — Destaque do dia`;
   featuredTags.innerHTML = `
     <span class="featured-badge">${destaque.tipo === 'fauna' ? 'Fauna' : 'Flora'}</span>
@@ -1416,7 +1421,7 @@ async function loadGaleria() {
       const isFeatured = selectedId && String(selectedId) === String(img.id);
       return `
       <div class="galeria-item">
-        <img src="${img.img}" alt="${img.especie}" class="galeria-img" loading="lazy">
+        <img src="${resolveMediaUrl(img.img)}" alt="${img.especie}" class="galeria-img" loading="lazy">
         <div class="galeria-info">
           <h4>${img.especie}</h4>
           ${isFeatured ? `<div class="featured-badge" style="margin-bottom:.5rem;">Destaque escolhido</div>` : ''}
@@ -1424,7 +1429,7 @@ async function loadGaleria() {
           <div class="galeria-meta">📅 ${img.data}</div>
           <div class="galeria-meta">🏷️ ${img.tipo === 'fauna' ? 'Fauna' : 'Flora'}</div>
           <div class="galeria-user">
-            ${img.usuario_foto ? `<img src="${img.usuario_foto}" alt="Foto de ${img.usuario}" class="galeria-user-avatar">` : '👤'}
+            ${img.usuario_foto ? `<img src="${resolveMediaUrl(img.usuario_foto)}" alt="Foto de ${img.usuario}" class="galeria-user-avatar">` : '👤'}
             <span>${img.usuario}</span>
           </div>
           ${img.desc ? `<div class="galeria-meta" style="margin-top:.5rem;font-style:italic;">"${img.desc}"</div>` : ''}
