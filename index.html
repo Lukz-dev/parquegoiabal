@@ -343,8 +343,8 @@
 
   .map-marker { font-size: 24px; text-align: center; }
 </style>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-o0rW4s8ZrBAdA+g0ygXxyhWb5D8XAg6Kb1C4mJUtqC0=" crossorigin="" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-oHo+E2vkb3wH+wucPyge/CycYyQ7Ys5GV3YLE2zeM2M=" crossorigin=""></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </head>
 <body>
 
@@ -663,28 +663,28 @@
       <div class="membro">
         <div class="avatar">
           <span class="initial">LF</span>
-          <img src="/uploads/dev-lucas.jpg" alt="Foto de Lucas Freitas" onerror="this.style.display='none'">
+          <img data-media-src="/uploads/dev-lucas.jpg" alt="Foto de Lucas Freitas" onerror="this.style.display='none'">
         </div>
         <h4>Lucas Freitas</h4>
       </div>
       <div class="membro">
         <div class="avatar">
           <span class="initial">GM</span>
-          <img src="/uploads/dev-gustavo.jpg" alt="Foto de Gustavo Marques" onerror="this.style.display='none'">
+          <img data-media-src="/uploads/dev-gustavo.jpg" alt="Foto de Gustavo Marques" onerror="this.style.display='none'">
         </div>
         <h4>Gustavo Marques</h4>
       </div>
       <div class="membro">
         <div class="avatar">
           <span class="initial">LO</span>
-          <img src="/uploads/dev-luis.jpg" alt="Foto de Luis Pereira" onerror="this.style.display='none'">
+          <img data-media-src="/uploads/dev-luis.jpg" alt="Foto de Luis Pereira" onerror="this.style.display='none'">
         </div>
         <h4>Luis Pereira</h4>
       </div>
       <div class="membro">
         <div class="avatar">
           <span class="initial">DS</span>
-          <img src="/uploads/dev-douglas.jpg" alt="Foto de Douglas Santana" onerror="this.style.display='none'">
+          <img data-media-src="/uploads/dev-douglas.jpg" alt="Foto de Douglas Santana" onerror="this.style.display='none'">
         </div>
         <h4>Douglas Santana</h4>
       </div>
@@ -770,6 +770,13 @@ function apiUrl(path) {
 function resolveMediaUrl(path) {
   if (!path) return '';
   return path.startsWith('/') ? apiUrl(path) : path;
+}
+
+function setStaticMediaUrls() {
+  document.querySelectorAll('[data-media-src]').forEach(img => {
+    const path = img.dataset.mediaSrc;
+    if (path) img.src = resolveMediaUrl(path);
+  });
 }
 
 function getFeaturedImageId() {
@@ -1276,7 +1283,21 @@ function saveGalleryReactions(data) {
 
 function getImageReactions(imageId) {
   const reactions = getStoredGalleryReactions();
-  return reactions[imageId] || { counts: { verde: 0, amor: 0, estrela: 0 }, users: {} };
+  const imageReactions = reactions[imageId] || reactions[String(imageId)] || reactions[Number(imageId)] || null;
+  if (!imageReactions || typeof imageReactions !== 'object') {
+    return { counts: { verde: 0, amor: 0, estrela: 0 }, users: {} };
+  }
+  const counts = imageReactions.counts && typeof imageReactions.counts === 'object'
+    ? imageReactions.counts
+    : { verde: 0, amor: 0, estrela: 0 };
+  return {
+    counts: {
+      verde: Number(counts.verde) || 0,
+      amor: Number(counts.amor) || 0,
+      estrela: Number(counts.estrela) || 0
+    },
+    users: imageReactions.users && typeof imageReactions.users === 'object' ? imageReactions.users : {}
+  };
 }
 
 function getReactionsForImage(imageId) {
@@ -1285,7 +1306,8 @@ function getReactionsForImage(imageId) {
 
 function getUserReactionForImage(imageId) {
   const imageReactions = getImageReactions(imageId);
-  return state.user ? imageReactions.users[state.user.id] : null;
+  if (!state.user || !imageReactions.users) return null;
+  return imageReactions.users[state.user.id] || imageReactions.users[String(state.user.id)] || null;
 }
 
 function addReaction(imageId, type) {
@@ -1501,6 +1523,7 @@ async function excluirImagem(registroId) {
 
 // ── INIT ──────────────────────────────────────────────
 loadUserFromStorage();
+setStaticMediaUrls();
 updateStats();
 loadRegistros();
 loadDenuncias();
