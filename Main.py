@@ -3,6 +3,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+import boto3
+from botocore.exceptions import ClientError
 from sqlalchemy.orm import joinedload
 import os
 from datetime import datetime
@@ -19,6 +21,81 @@ app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 db = SQLAlchemy(app)
+
+# Storage configuration (optional). If SPACES_BUCKET or DO_SPACES_BUCKET is set, uploads will go to a DigitalOcean Spaces-compatible endpoint.
+STORAGE_BUCKET = (
+    os.environ.get('SPACES_BUCKET')
+    or os.environ.get('DO_SPACES_BUCKET')
+    or os.environ.get('AWS_S3_BUCKET')
+)
+STORAGE_REGION = (
+    os.environ.get('SPACES_REGION')
+    or os.environ.get('DO_SPACES_REGION')
+    or os.environ.get('AWS_REGION', 'us-east-1')
+)
+STORAGE_ACCESS_KEY = (
+    os.environ.get('SPACES_KEY')
+    or os.environ.get('DO_SPACES_KEY')
+    or os.environ.get('AWS_ACCESS_KEY_ID')
+)
+STORAGE_SECRET_KEY = (
+    os.environ.get('SPACES_SECRET')
+    or os.environ.get('DO_SPACES_SECRET')
+    or os.environ.get('AWS_SECRET_ACCESS_KEY')
+)
+STORAGE_ENDPOINT_URL = (
+    os.environ.get('SPACES_ENDPOINT_URL')
+    or os.environ.get('DO_SPACES_ENDPOINT_URL')
+)
+STORAGE_PUBLIC = os.environ.get('SPACES_PUBLIC', os.environ.get('S3_PUBLIC', '1')) == '1'
+
+if not STORAGE_ENDPOINT_URL and (os.environ.get('SPACES_BUCKET') or os.environ.get('DO_SPACES_BUCKET')):
+    STORAGE_ENDPOINT_URL = f'https://{STORAGE_REGION}.digitaloceanspaces.com'
+
+STORAGE_BASE_URL = None
+if STORAGE_BUCKET:
+    if STORAGE_ENDPOINT_URL:
+        endpoint_host = STORAGE_ENDPOINT_URL.replace('https://', '').replace('http://', '').rstrip('/')
+        if endpoint_host.startswith(f'{STORAGE_BUCKET}.'):
+            STORAGE_BASE_URL = f'https://{endpoint_host}'
+        else:
+            STORAGE_BASE_URL = f'https://{STORAGE_BUCKET}.{endpoint_host}'
+    else:
+        STORAGE_BASE_URL = f'https://{STORAGE_BUCKET}.s3.{STORAGE_REGION}.amazonaws.com'
+
+STORAGE_ENABLED = bool(STORAGE_BUCKET and STORAGE_ACCESS_KEY and STORAGE_SECRET_KEY)
+if STORAGE_ENABLED:
+    client_args = {
+        'aws_access_key_id': STORAGE_ACCESS_KEY,
+        'aws_secret_access_key': STORAGE_SECRET_KEY,
+        'region_name': STORAGE_REGION,
+    }
+    if STORAGE_ENDPOINT_URL:
+        client_args['endpoint_url'] = STORAGE_ENDPOINT_URL
+    s3_client = boto3.client('s3', **client_args)
+
+def upload_file_to_storage(file_obj, key, content_type=None):
+    extra_args = {}
+    if STORAGE_PUBLIC:
+        extra_args['ACL'] = 'public-read'
+    if content_type:
+        extra_args['ContentType'] = content_type
+    try:
+        s3_client.upload_fileobj(file_obj, STORAGE_BUCKET, key, ExtraArgs=extra_args)
+    except ClientError as e:
+        app.logger.error('Storage upload error: %s', e)
+        raise
+    return f"{STORAGE_BASE_URL}/{key}"
+
+def delete_storage_object_by_url(url):
+    if not STORAGE_ENABLED or not url:
+        return
+    if STORAGE_BASE_URL and url.startswith(STORAGE_BASE_URL):
+        key = url[len(STORAGE_BASE_URL) + 1:]
+        try:
+            s3_client.delete_object(Bucket=STORAGE_BUCKET, Key=key)
+        except ClientError as e:
+            app.logger.error('Storage delete error: %s', e)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -85,6 +162,36 @@ def index():
 def health():
     return jsonify({'status': 'ok', 'message': 'Servidor está funcionando!'}), 200
 
+
+@app.route('/api/s3_check', methods=['GET'])
+@app.route('/api/storage_check', methods=['GET'])
+def storage_check():
+    """Verifica se a configuração de armazenamento externo está ativa e tenta acessar o bucket.
+    Use para validar que as variáveis de ambiente foram configuradas corretamente.
+    """
+    if not STORAGE_ENABLED:
+        return jsonify({'storage_enabled': False, 'message': 'Armazenamento externo não está configurado (bucket ou credenciais ausentes)'}), 200
+    try:
+        # tenta head_bucket para verificar permissões
+        s3_client.head_bucket(Bucket=STORAGE_BUCKET)
+        return jsonify({
+            'storage_enabled': True,
+            'bucket': STORAGE_BUCKET,
+            'region': STORAGE_REGION,
+            'endpoint': STORAGE_ENDPOINT_URL,
+            'ok': True
+        }), 200
+    except ClientError as e:
+        err = e.response.get('Error', {})
+        return jsonify({
+            'storage_enabled': True,
+            'bucket': STORAGE_BUCKET,
+            'region': STORAGE_REGION,
+            'endpoint': STORAGE_ENDPOINT_URL,
+            'ok': False,
+            'error': err
+        }), 200
+
 @app.route('/api/register', methods=['POST'])
 def register():
     try:
@@ -131,14 +238,23 @@ def register():
                 
                 filename = secure_filename(file.filename)
                 filename = f"profile_{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}_{filename}"
-                foto_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                try:
-                    file.save(foto_path)
-                    print(f"✓ Foto salva em: {foto_path}")
-                except Exception as e:
-                    print(f'❌ Erro ao salvar foto: {e}')
-                    return jsonify({'error': 'Erro ao salvar foto de perfil'}), 500
-        
+                if STORAGE_ENABLED:
+                    key = f'profiles/{filename}'
+                    try:
+                        foto_path = upload_file_to_storage(file, key, content_type=file.content_type)
+                        print(f"✓ Foto enviada para storage: {foto_path}")
+                    except Exception as e:
+                        print(f'❌ Erro ao enviar foto para storage: {e}')
+                        return jsonify({'error': 'Erro ao salvar foto de perfil'}), 500
+                else:
+                    foto_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    try:
+                        file.save(foto_path)
+                        print(f"✓ Foto salva em: {foto_path}")
+                    except Exception as e:
+                        print(f'❌ Erro ao salvar foto: {e}')
+                        return jsonify({'error': 'Erro ao salvar foto de perfil'}), 500
+
         print(f"\n🔐 Criando hash de senha...")
         hashed_senha = generate_password_hash(senha)
         user = User(nome=nome, sobrenome=sobrenome, email=email, senha=hashed_senha, tipo=tipo, foto=foto_path)
@@ -147,7 +263,10 @@ def register():
         
         foto_url = None
         if foto_path:
-            foto_url = f'/uploads/{os.path.basename(foto_path)}'
+            if isinstance(foto_path, str) and foto_path.startswith('http'):
+                foto_url = foto_path
+            else:
+                foto_url = f'/uploads/{os.path.basename(foto_path)}'
         
         print(f"✅ Usuário criado com sucesso!")
         print(f"   ID: {user.id}")
@@ -174,7 +293,13 @@ def login():
     user = User.query.filter_by(email=email).first()
     if not user or not check_password_hash(user.senha, senha):
         return jsonify({'error': 'Credenciais inválidas'}), 401
-    return jsonify({'user': {'id': user.id, 'nome': user.nome, 'email': user.email, 'tipo': user.tipo, 'foto': f'/uploads/{os.path.basename(user.foto)}' if user.foto else None}})
+    foto_url = None
+    if user.foto:
+        if isinstance(user.foto, str) and user.foto.startswith('http'):
+            foto_url = user.foto
+        else:
+            foto_url = f'/uploads/{os.path.basename(user.foto)}'
+    return jsonify({'user': {'id': user.id, 'nome': user.nome, 'email': user.email, 'tipo': user.tipo, 'foto': foto_url}})
 
 @app.route('/api/registros', methods=['GET', 'POST'])
 def registros():
@@ -207,8 +332,16 @@ def registros():
                     
                     filename = secure_filename(file.filename)
                     filename = f"registro_{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}_{filename}"
-                    img_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                    file.save(img_path)
+                    if STORAGE_ENABLED:
+                        key = f'registros/{filename}'
+                        try:
+                            img_path = upload_file_to_storage(file, key, content_type=file.content_type)
+                        except Exception as e:
+                            print(f'Erro ao enviar imagem para storage: {e}')
+                            return jsonify({'error': 'Erro ao salvar imagem'}), 500
+                    else:
+                        img_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                        file.save(img_path)
             registro = Registro(especie=especie, tipo=tipo, local=local, desc=desc, img=img_path, lat=lat, lng=lng, usuario_id=usuario_id)
             db.session.add(registro)
             db.session.commit()
@@ -220,18 +353,31 @@ def registros():
         regs = Registro.query.options(joinedload(Registro.user)).all()
         result = []
         for r in regs:
+            # normalize img and usuario_foto to public URLs
+            img_url = None
+            if r.img:
+                if isinstance(r.img, str) and r.img.startswith('http'):
+                    img_url = r.img
+                else:
+                    img_url = f'/uploads/{os.path.basename(r.img)}'
+            usuario_foto_url = None
+            if r.user and r.user.foto:
+                if isinstance(r.user.foto, str) and r.user.foto.startswith('http'):
+                    usuario_foto_url = r.user.foto
+                else:
+                    usuario_foto_url = f'/uploads/{os.path.basename(r.user.foto)}'
             result.append({
                 'id': r.id,
                 'especie': r.especie,
                 'tipo': r.tipo,
                 'local': r.local,
                 'desc': r.desc,
-                'img': f'/uploads/{os.path.basename(r.img)}' if r.img else None,
+                'img': img_url,
                 'lat': r.lat,
                 'lng': r.lng,
                 'data': r.data.strftime('%d/%m/%Y'),
                 'usuario': r.user.nome if r.user else None,
-                'usuario_foto': f'/uploads/{os.path.basename(r.user.foto)}' if r.user and r.user.foto else None
+                'usuario_foto': usuario_foto_url
             })
         return jsonify(result)
 
@@ -298,7 +444,7 @@ def stats():
 @app.route('/api/imagens')
 def imagens():
     regs = Registro.query.filter(Registro.img.isnot(None)).join(User).add_columns(
-        Registro.id, Registro.especie, Registro.tipo, Registro.local, Registro.desc, Registro.img, Registro.lat, Registro.lng, Registro.data,
+        Registro.id, Registro.especie, Registro.tipo, Registro.local, Registro.desc, Registro.img, Registro.lat, Registro.lng, Registro.data, Registro.usuario_id,
         User.nome.label('usuario'), User.foto.label('usuario_foto')
     ).order_by(Registro.data.desc()).all()
     
@@ -306,6 +452,7 @@ def imagens():
     for r in regs:
         result.append({
             'id': r.id,
+            'usuario_id': r.usuario_id,
             'especie': r.especie,
             'tipo': r.tipo,
             'local': r.local,
@@ -326,18 +473,29 @@ def delete_imagem(registro_id):
     if not usuario_id:
         return jsonify({'error': 'Não autorizado'}), 401
     user = User.query.get(usuario_id)
-    if not user or user.tipo != 'admin':
-        return jsonify({'error': 'Acesso negado'}), 403
+    if not user:
+        return jsonify({'error': 'Usuário não encontrado'}), 404
 
     registro = Registro.query.get(registro_id)
     if not registro:
         return jsonify({'error': 'Registro não encontrado'}), 404
 
+    # Permitir exclusão se for admin ou se for o dono da imagem
+    if user.tipo != 'admin' and registro.usuario_id != usuario_id:
+        return jsonify({'error': 'Acesso negado'}), 403
+
     if registro.img:
+        # se imagem estiver no storage externo (URL), delete do storage, caso contrário delete arquivo local
         try:
-            os.remove(registro.img)
-        except OSError:
-            pass
+            if STORAGE_ENABLED and isinstance(registro.img, str) and STORAGE_BASE_URL and registro.img.startswith(STORAGE_BASE_URL):
+                delete_storage_object_by_url(registro.img)
+            else:
+                try:
+                    os.remove(registro.img)
+                except OSError:
+                    pass
+        except Exception as e:
+            app.logger.error('Erro ao apagar imagem associada: %s', e)
     db.session.delete(registro)
     db.session.commit()
     return jsonify({'message': 'Registro excluído'})

@@ -342,8 +342,22 @@
   @media(max-width:600px) { .form-row { grid-template-columns:1fr; } }
 
   .map-marker { font-size: 24px; text-align: center; }
-</style>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+
+  /* ── PERFIL ──────────────────────────────────────── */
+  .perfil-header { display:grid; grid-template-columns:160px 1fr; gap:2rem; align-items:center; background:#fff; border-radius:var(--radius); padding:2rem; box-shadow:var(--sombra); margin-bottom:2rem; }
+  @media(max-width:640px) { .perfil-header { grid-template-columns:1fr; gap:1rem; } }
+  .perfil-avatar { display:flex; justify-content:center; }
+  .perfil-avatar-display { width:140px; height:140px; border-radius:50%; background:var(--verde-palido); display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:800; font-size:3rem; color:var(--verde); overflow:hidden; }
+  .perfil-avatar-display img { width:100%; height:100%; object-fit:cover; }
+  .perfil-info h3 { font-size:1.6rem; font-weight:800; margin-bottom:.5rem; }
+  .perfil-email { color:var(--cinza); font-size:.95rem; }
+  .perfil-tipo { display:inline-block; background:var(--verde-palido); color:var(--verde); padding:.35rem .75rem; border-radius:999px; font-size:.8rem; font-weight:700; margin-top:.5rem; }
+  .perfil-contribuicoes { }
+  .perfil-imagem-card { position:relative; }
+  .perfil-imagem-delete { position:absolute; top:.5rem; right:.5rem; background:rgba(220,38,38,.9); color:#fff; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; font-size:1.2rem; display:flex; align-items:center; justify-content:center; transition:.2s; }
+  .perfil-imagem-delete:hover { background:#dc2626; }
+
+</style>\n<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </head>
 <body>
@@ -361,6 +375,7 @@
     <li><a href="#" onclick="showPage('denuncia')" id="nav-denuncia">🚨 Denúncias</a></li>
     <li><a href="#" onclick="showPage('sobre')" id="nav-sobre">ℹ️ Sobre</a></li>
     <li><a href="#" onclick="showPage('imagens')" id="nav-imagens">📸 Imagens</a></li>
+    <li id="nav-perfil-item" style="display:none;"><a href="#" onclick="showPage('perfil')" id="nav-perfil">👤 Meu perfil</a></li>
   </ul>
   <div class="nav-user">
     <div id="user-info">
@@ -701,7 +716,39 @@
   </div>
 </div>
 
-<!-- ── PAGE: IMAGENS ─────────────────────────────────── -->
+<!-- ── PAGE: PERFIL ──────────────────────────────────── -->
+<div class="page" id="page-perfil">
+  <div class="page-header">
+    <h2>👤 Meu Perfil</h2>
+    <p>Visualize e gerencie suas contribuições</p>
+  </div>
+  <div class="page-content">
+    <div class="perfil-header">
+      <div class="perfil-avatar">
+        <div id="perfil-avatar-img" class="perfil-avatar-display">?</div>
+      </div>
+      <div class="perfil-info">
+        <h3 id="perfil-nome">Carregando...</h3>
+        <p id="perfil-email" class="perfil-email"></p>
+        <p id="perfil-tipo" class="perfil-tipo"></p>
+        <p id="perfil-contribuicoes" class="perfil-contribuicoes" style="margin-top:1rem;color:var(--verde);font-weight:700;">0 imagens enviadas</p>
+      </div>
+    </div>
+    <div style="margin-top:2rem;">
+      <h3>📸 Minhas imagens</h3>
+      <div id="perfil-imagens" class="galeria-grid" style="margin-top:1rem;">
+        <!-- imagens do usuário serão carregadas aqui -->
+      </div>
+      <div id="perfil-vazio" style="text-align:center;padding:2rem;color:var(--cinza);display:none;">
+        Você ainda não enviou nenhuma imagem.
+      </div>
+      <div id="perfil-loading" style="text-align:center;padding:2rem;color:var(--cinza);">
+        Carregando suas imagens...
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="page" id="page-imagens">
   <div class="page-header">
     <h2>📸 Galeria de Imagens</h2>
@@ -865,6 +912,7 @@ function setUserUI(showToast = true) {
   if (!state.user) return;
   document.getElementById('user-info').style.display = 'flex';
   document.getElementById('btn-abrir-login').style.display = 'none';
+  document.getElementById('nav-perfil-item').style.display = 'block';
   const avatarEl = document.getElementById('user-avatar');
   if (state.user.foto) {
     avatarEl.innerHTML = `<img src="${state.user.foto}" alt="Foto de perfil" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
@@ -899,6 +947,7 @@ function showPage(id) {
   if (id === 'registro') loadRegistros();
   if (id === 'denuncia') loadDenuncias();
   if (id === 'imagens') loadGaleria();
+  if (id === 'perfil') loadPerfil();
   updateAvisos();
   return false;
 }
@@ -1022,6 +1071,7 @@ function sair() {
   clearUserFromStorage();
   document.getElementById('user-info').style.display = 'none';
   document.getElementById('btn-abrir-login').style.display = 'block';
+  document.getElementById('nav-perfil-item').style.display = 'none';
   updateAvisos();
   toast('Até logo!');
 }
@@ -1512,6 +1562,99 @@ async function excluirImagem(registroId) {
     if (res.ok) {
       toast('Imagem excluída com sucesso.', 'success');
       loadGaleria();
+    } else {
+      toast(data.error || 'Não foi possível excluir a imagem.', 'error');
+    }
+  } catch (e) {
+    console.error('Erro ao excluir imagem:', e);
+    toast('Erro ao excluir a imagem.', 'error');
+  }
+}
+
+async function loadPerfil() {
+  if (!state.user) {
+    toast('Você precisa estar logado para acessar seu perfil.', 'error');
+    return;
+  }
+
+  const loadingEl = document.getElementById('perfil-loading');
+  const vazio = document.getElementById('perfil-vazio');
+  const gridEl = document.getElementById('perfil-imagens');
+
+  loadingEl.style.display = 'block';
+  vazio.style.display = 'none';
+  gridEl.innerHTML = '';
+
+  try {
+    // Carregar dados do perfil
+    document.getElementById('perfil-nome').textContent = state.user.nome;
+    document.getElementById('perfil-email').textContent = state.user.email;
+    document.getElementById('perfil-tipo').textContent = state.user.tipo === 'admin' ? '⭐ Administrador' : '👤 Contribuidor';
+    
+    const avatarDisplay = document.getElementById('perfil-avatar-img');
+    if (state.user.foto) {
+      avatarDisplay.innerHTML = `<img src="${resolveMediaUrl(state.user.foto)}" alt="Avatar de ${state.user.nome}">`;
+    } else {
+      avatarDisplay.textContent = state.user.nome[0].toUpperCase();
+    }
+
+    // Carregar imagens do usuário
+    const res = await fetch(apiUrl('/api/imagens'));
+    if (!res.ok) throw new Error('Erro ao carregar imagens');
+    
+    const imagens = await res.json();
+    const usuarioImagens = imagens.filter(img => img.usuario_id === state.user.id);
+    
+    document.getElementById('perfil-contribuicoes').textContent = `${usuarioImagens.length} foto${usuarioImagens.length !== 1 ? 's' : ''} enviada${usuarioImagens.length !== 1 ? 's' : ''}`;
+
+    loadingEl.style.display = 'none';
+
+    if (usuarioImagens.length === 0) {
+      vazio.style.display = 'block';
+      return;
+    }
+
+    gridEl.innerHTML = usuarioImagens.map(img => `
+      <div class="perfil-imagem-card galeria-item">
+        <img src="${resolveMediaUrl(img.img)}" alt="${img.especie}" loading="lazy" class="galeria-img">
+        <button class="perfil-imagem-delete" onclick="excluirImagemUsuario(${img.id})" title="Excluir imagem">🗑️</button>
+        <div style="padding:0.75rem;">
+          <div style="font-weight:600;font-size:0.95rem;margin-bottom:0.25rem;">${img.especie}</div>
+          <div style="color:var(--cinza);font-size:0.85rem;margin-bottom:0.5rem;">${img.local || 'Local não informado'}</div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <span class="featured-badge">${img.tipo}</span>
+            <span style="color:var(--cinza);font-size:0.8rem;">${img.data}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+  } catch (e) {
+    console.error('Erro ao carregar perfil:', e);
+    loadingEl.style.display = 'none';
+    vazio.style.display = 'block';
+    vazio.innerHTML = '<p>Erro ao carregar seus dados. Tente novamente.</p>';
+  }
+}
+
+async function excluirImagemUsuario(registroId) {
+  if (!state.user) {
+    toast('Você precisa estar logado.', 'error');
+    return;
+  }
+
+  if (!confirm('Tem certeza que deseja excluir esta imagem?')) return;
+
+  try {
+    const res = await fetch(apiUrl(`/api/imagens/${registroId}`), {
+      method: 'DELETE',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ usuario_id: state.user.id })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      toast('Imagem excluída com sucesso.', 'success');
+      loadPerfil();
     } else {
       toast(data.error || 'Não foi possível excluir a imagem.', 'error');
     }
