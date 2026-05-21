@@ -1408,9 +1408,6 @@ async function loadGaleria() {
     }
 
     const selectedId = getFeaturedImageId();
-    renderFeaturedImage(imagens);
-    updateGalleryMap(imagens);
-    
     const html = imagens.map(img => {
       const reactions = getReactionsForImage(img.id);
       const userReaction = getUserReactionForImage(img.id);
@@ -1450,6 +1447,21 @@ async function loadGaleria() {
     Array.from(gridEl.children).forEach((card, index) => {
       setTimeout(() => card.classList.add('visible'), index * 80);
     });
+
+    try {
+      renderFeaturedImage(imagens);
+    } catch (err) {
+      console.error('Erro ao renderizar destaque:', err);
+      toast('Erro ao atualizar o destaque da galeria.', 'error');
+    }
+
+    try {
+      updateGalleryMap(imagens);
+    } catch (err) {
+      console.error('Erro ao atualizar o mapa da galeria:', err);
+      const mapEl = document.getElementById('gallery-map');
+      if (mapEl) mapEl.textContent = 'Não foi possível carregar o mapa agora.';
+    }
 
   } catch (e) {
     console.error('Erro ao carregar galeria:', e);
