@@ -1769,12 +1769,29 @@ async function excluirImagemUsuario(registroId) {
 }
 
 // ── INIT ──────────────────────────────────────────────
-loadUserFromStorage();
-setStaticMediaUrls();
-updateStats();
-loadRegistros();
-loadDenuncias();
-loadCommunityFeed();
+async function appInit() {
+  loadUserFromStorage();
+  setStaticMediaUrls();
+  updateStats();
+  // check backend health before calling API endpoints
+  try {
+    const res = await fetch(apiUrl('/api/health'));
+    if (res.ok) {
+      // backend available — load dynamic content
+      loadRegistros();
+      loadDenuncias();
+      loadCommunityFeed();
+    } else {
+      // show persistent banner
+      try { document.getElementById('server-status').style.display = 'block'; } catch(e){}
+    }
+  } catch (e) {
+    // backend unreachable — show banner
+    try { document.getElementById('server-status').style.display = 'block'; } catch(err){}
+  }
+}
+
+appInit();
 document.getElementById('modal-auth').addEventListener('click', e => { if(e.target===document.getElementById('modal-auth')) closeModal(); });
 </script>
 </body>
