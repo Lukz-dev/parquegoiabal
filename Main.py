@@ -6,15 +6,17 @@ from werkzeug.utils import secure_filename
 import boto3
 from botocore.exceptions import ClientError
 from sqlalchemy.orm import joinedload
+from sqlalchemy import text
 import os
 from datetime import datetime
 
 app = Flask(__name__)
 CORS(app, origins="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
      allow_headers=["*"])
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///goiabal.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+DATABASE_PATH = os.path.join(BASE_DIR, 'goiabal.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DATABASE_PATH.replace('\\', '/')}"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB
 
@@ -126,6 +128,7 @@ class Denuncia(db.Model):
     local = db.Column(db.String(200))
     gravidade = db.Column(db.String(50), nullable=False)
     status = db.Column(db.String(50), default='aberto')  # aberto, andamento, resolvido
+    img = db.Column(db.String(300))  # path to optional evidence image
     lat = db.Column(db.Float)
     lng = db.Column(db.Float)
     usuario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -152,6 +155,13 @@ def create_admin_user():
 
 with app.app_context():
     db.create_all()
+    try:
+        denuncia_columns = {column[1] for column in db.session.execute(text('PRAGMA table_info(denuncia)')).all()}
+        if 'img' not in denuncia_columns:
+            db.session.execute(text('ALTER TABLE denuncia ADD COLUMN img VARCHAR(300)'))
+            db.session.commit()
+    except Exception as e:
+        app.logger.error('Erro ao garantir coluna img em denuncia: %s', e)
     create_admin_user()
 
 @app.route('/')
@@ -397,17 +407,48 @@ def denuncias():
         if lng: lng = float(lng)
         if not tipo or not desc:
             return jsonify({'error': 'Dados obrigatórios faltando'}), 400
-        denuncia = Denuncia(tipo=tipo, desc=desc, local=local, gravidade=gravidade, lat=lat, lng=lng, usuario_id=usuario_id)
+
+        img_path = None
+        if 'img' in request.files:
+            file = request.files['img']
+            if file and file.filename:
+                file.seek(0, os.SEEK_END)
+                file_size = file.tell()
+                file.seek(0)
+
+                if file_size > 50 * 1024 * 1024:
+                    return jsonify({'error': 'Imagem muito grande. O tamanho máximo permitido é 50MB.'}), 413
+
+                filename = secure_filename(file.filename)
+                filename = f"denuncia_{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}_{filename}"
+                if STORAGE_ENABLED:
+                    key = f'denuncias/{filename}'
+                    try:
+                        img_path = upload_file_to_storage(file, key, content_type=file.content_type)
+                    except Exception as e:
+                        print(f'Erro ao enviar imagem da denúncia para storage: {e}')
+                        return jsonify({'error': 'Erro ao salvar imagem da denúncia'}), 500
+                else:
+                    img_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    file.save(img_path)
+
+        denuncia = Denuncia(tipo=tipo, desc=desc, local=local, gravidade=gravidade, lat=lat, lng=lng, usuario_id=usuario_id, img=img_path)
         db.session.add(denuncia)
         db.session.commit()
         return jsonify({'message': 'Denúncia criada'})
     else:
         dens = Denuncia.query.join(User).add_columns(
-            Denuncia.id, Denuncia.tipo, Denuncia.desc, Denuncia.local, Denuncia.gravidade, Denuncia.status, Denuncia.lat, Denuncia.lng, Denuncia.data,
+            Denuncia.id, Denuncia.tipo, Denuncia.desc, Denuncia.local, Denuncia.gravidade, Denuncia.status, Denuncia.lat, Denuncia.lng, Denuncia.data, Denuncia.img,
             User.nome.label('usuario')
         ).all()
         result = []
         for d in dens:
+            img_url = None
+            if d.img:
+                if isinstance(d.img, str) and d.img.startswith('http'):
+                    img_url = d.img
+                else:
+                    img_url = f'/uploads/{os.path.basename(d.img)}'
             result.append({
                 'id': d.id,
                 'tipo': d.tipo,
@@ -415,6 +456,7 @@ def denuncias():
                 'local': d.local,
                 'gravidade': d.gravidade,
                 'status': d.status,
+                'img': img_url,
                 'lat': d.lat,
                 'lng': d.lng,
                 'data': d.data.strftime('%d/%m/%Y'),

@@ -357,6 +357,23 @@
   .perfil-imagem-delete { position:absolute; top:.5rem; right:.5rem; background:rgba(220,38,38,.9); color:#fff; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; font-size:1.2rem; display:flex; align-items:center; justify-content:center; transition:.2s; }
   .perfil-imagem-delete:hover { background:#dc2626; }
 
+    /* ── FEED COMUNIDADE ─────────────────────────────── */
+    .feed-section { max-width:1100px; margin:0 auto 3rem; padding:0 2rem; }
+    .feed-header { display:flex; align-items:flex-end; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
+    .feed-header h3 { font-size:1.35rem; margin-bottom:.35rem; }
+    .feed-header p { color:var(--cinza); font-size:.92rem; line-height:1.5; }
+    .feed-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.25rem; }
+    .feed-card { background:#fff; border-radius:var(--radius); overflow:hidden; box-shadow:var(--sombra); display:flex; flex-direction:column; transition:.25s; }
+    .feed-card:hover { transform:translateY(-3px); box-shadow:0 10px 36px rgba(45,106,79,.16); }
+    .feed-image { width:100%; aspect-ratio:4 / 3; object-fit:cover; background:var(--verde-palido); }
+    .feed-body { padding:1rem; display:flex; flex-direction:column; gap:.55rem; }
+    .feed-user { display:flex; align-items:center; gap:.5rem; font-weight:700; font-size:.92rem; }
+    .feed-user img { width:26px; height:26px; border-radius:50%; object-fit:cover; border:1px solid var(--verde-claro); }
+    .feed-meta { display:flex; flex-wrap:wrap; gap:.4rem; color:var(--cinza); font-size:.82rem; }
+    .feed-caption { color:#4b5b51; line-height:1.55; font-size:.93rem; }
+    .feed-link { margin-top:.2rem; color:var(--verde); font-weight:700; font-size:.88rem; text-decoration:none; }
+    .feed-link:hover { text-decoration:underline; }
+
 </style>\n<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </head>
@@ -482,6 +499,21 @@
       <div class="card-arrow">Ver imagens →</div>
     </div>
   </div>
+
+  <section class="feed-section">
+    <div class="feed-header">
+      <div>
+        <h3>📸 Feed da comunidade</h3>
+        <p>As fotos publicadas pelos usuários aparecem aqui em ordem das mais recentes.</p>
+      </div>
+      <a href="#" class="feed-link" onclick="showPage('imagens'); return false;">Abrir galeria completa →</a>
+    </div>
+    <div id="community-feed" class="feed-grid"></div>
+    <div id="community-feed-loading" style="text-align:center;padding:1.5rem;color:var(--cinza);">Carregando fotos do feed...</div>
+    <div id="community-feed-empty" style="text-align:center;padding:1.5rem;color:var(--cinza);display:none;">
+      Nenhuma foto publicada ainda. Seja o primeiro a postar.
+    </div>
+  </section>
 </div>
 
 <!-- ── PAGE: REGISTRO ──────────────────────────────── -->
@@ -582,6 +614,11 @@
           <div class="form-group">
             <label>Descrição detalhada *</label>
             <textarea id="den-desc" name="desc" rows="4" placeholder="Descreva o problema com o máximo de detalhes possível..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Foto da denúncia (opcional)</label>
+            <input type="file" id="den-img" name="img" accept="image/*" capture="environment">
+            <small style="display:block;margin-top:.35rem;color:var(--cinza);">Você pode anexar uma imagem para ajudar na identificação do problema.</small>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -1285,6 +1322,7 @@ function renderDenuncias() {
     <div class="denuncia-item ${d.tipo}">
       <div class="di-icon">${d.tipo==='incendio'?'🔥':'🏭'}</div>
       <div style="flex:1">
+        ${d.img ? `<img src="${resolveMediaUrl(d.img)}" alt="Foto da denúncia" style="width:100%;max-height:220px;object-fit:cover;border-radius:12px;margin-bottom:.75rem;box-shadow:var(--sombra);">` : ''}
         <h4>${d.tipo==='incendio'?'Incêndio':'Poluição'} — ${d.local}</h4>
         <p>${d.desc.substring(0,100)}${d.desc.length>100?'...':''}</p>
         <p style="margin-top:.25rem">👤 ${d.usuario} · ${d.data} · Gravidade: ${d.gravidade}</p>
@@ -1302,7 +1340,7 @@ function ligar193() {
 function emailPrefeitura() {
   const assunto = encodeURIComponent('Denúncia Ambiental — Parque do Goiabal');
   const corpo = encodeURIComponent('Prezada Prefeitura de Ituiutaba,\n\nRegistro uma ocorrência ambiental no Parque do Goiabal:\n\n[Descreva o problema aqui]\n\nAtenciosamente.');
-  window.location.href = `mailto:prefeitura@ituiutaba.mg.gov.br?subject=${assunto}&body=${corpo}`;
+  window.location.href = `mailto:faleconosco@ituiutaba.mg.gov.br?subject=${assunto}&body=${corpo}`;
   toast('✉️ Abrindo cliente de e-mail...', 'success');
 }
 
@@ -1547,6 +1585,58 @@ async function loadGaleria() {
   }
 }
 
+async function loadCommunityFeed() {
+  const loadingEl = document.getElementById('community-feed-loading');
+  const emptyEl = document.getElementById('community-feed-empty');
+  const gridEl = document.getElementById('community-feed');
+
+  if (!loadingEl || !emptyEl || !gridEl) return;
+
+  loadingEl.style.display = 'block';
+  emptyEl.style.display = 'none';
+  gridEl.innerHTML = '';
+
+  try {
+    const res = await fetch(apiUrl('/api/imagens'));
+    if (!res.ok) throw new Error('Erro ao carregar feed');
+
+    const imagens = await res.json();
+    const recentes = imagens.slice(0, 8);
+
+    loadingEl.style.display = 'none';
+
+    if (recentes.length === 0) {
+      emptyEl.style.display = 'block';
+      return;
+    }
+
+    gridEl.innerHTML = recentes.map(img => `
+      <article class="feed-card">
+        <img src="${resolveMediaUrl(img.img)}" alt="${img.especie}" class="feed-image" loading="lazy">
+        <div class="feed-body">
+          <div class="feed-user">
+            ${img.usuario_foto ? `<img src="${resolveMediaUrl(img.usuario_foto)}" alt="Foto de ${img.usuario}">` : '<span>👤</span>'}
+            <span>${img.usuario || 'Usuário da comunidade'}</span>
+          </div>
+          <strong>${img.especie}</strong>
+          <div class="feed-meta">
+            <span>${img.tipo === 'fauna' ? 'Fauna' : 'Flora'}</span>
+            ${img.local ? `<span>• ${img.local}</span>` : ''}
+            <span>• ${img.data}</span>
+          </div>
+          ${img.desc ? `<div class="feed-caption">${img.desc}</div>` : ''}
+          <a href="#" class="feed-link" onclick="showPage('imagens'); return false;">Ver publicação completa →</a>
+        </div>
+      </article>
+    `).join('');
+  } catch (error) {
+    console.error('Erro ao carregar feed da comunidade:', error);
+    loadingEl.style.display = 'none';
+    emptyEl.textContent = 'Não foi possível carregar o feed agora.';
+    emptyEl.style.display = 'block';
+  }
+}
+
 async function excluirImagem(registroId) {
   if (!state.user || state.user.tipo !== 'admin') {
     toast('Apenas administradores podem excluir imagens.', 'error');
@@ -1670,6 +1760,7 @@ setStaticMediaUrls();
 updateStats();
 loadRegistros();
 loadDenuncias();
+loadCommunityFeed();
 document.getElementById('modal-auth').addEventListener('click', e => { if(e.target===document.getElementById('modal-auth')) closeModal(); });
 </script>
 </body>
