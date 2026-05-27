@@ -15,7 +15,7 @@ CORS(app, origins="*", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
      allow_headers=["*"])
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DATABASE_PATH = os.path.join(BASE_DIR, 'goiabal.db')
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DATABASE_PATH.replace('\\', '/')}"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + DATABASE_PATH.replace('\\', '/')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = os.path.join(BASE_DIR, 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB
