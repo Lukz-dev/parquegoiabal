@@ -378,6 +378,10 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </head>
 <body>
+  <div id="server-status" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#b33;color:#fff;padding:.6rem;text-align:center;font-weight:600;">
+    <span id="server-status-text">Erro de conexão - servidor indisponível.</span>
+    <button id="server-retry" style="margin-left:1rem;padding:.25rem .5rem;border-radius:4px;border:none;cursor:pointer;">Tentar novamente</button>
+  </div>
 
 <!-- NAV -->
 <nav>
@@ -1044,9 +1048,17 @@ async function fazerCadastro() {
     const healthCheck = await fetch(apiUrl('/api/health'), { method: 'GET' });
     if (!healthCheck.ok) {
       console.error('❌ Servidor não respondeu ao health check');
+      // show persistent banner with retry
+      try {
+        document.getElementById('server-status').style.display = 'block';
+        document.getElementById('server-status-text').textContent = 'Servidor não está respondendo. Verifique o backend.';
+        document.getElementById('server-retry').onclick = () => { document.getElementById('server-status').style.display = 'none'; window.location.reload(); };
+      } catch(e) {}
       toast('Servidor não está respondendo. Tente mais tarde.', 'error');
       return;
     }
+    // hide banner if visible
+    try { document.getElementById('server-status').style.display = 'none'; } catch(e){}
     console.log('✓ Servidor respondendo');
     
     const formData = new FormData();
