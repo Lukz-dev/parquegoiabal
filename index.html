@@ -374,7 +374,7 @@
     .feed-link { margin-top:.2rem; color:var(--verde); font-weight:700; font-size:.88rem; text-decoration:none; }
     .feed-link:hover { text-decoration:underline; }
 
-</style>\n<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+</style><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </head>
 <body>
@@ -841,11 +841,14 @@ let galleryMarkers = [];
 const STORAGE_KEY = 'parquegoiabal_user';
 const FEATURED_IMAGE_KEY = 'galleryFeaturedImageId';
 const DEFAULT_API_BASE_URL = 'http://127.0.0.1:5000';
+const PRODUCTION_API_BASE_URL = 'https://goiabal-site.onrender.com';
 const API_BASE_URL = window.location.protocol === 'file:'
   ? DEFAULT_API_BASE_URL
-  : window.location.origin;
+  : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? window.location.origin
+    : PRODUCTION_API_BASE_URL;
 // Quando aberto direto do sistema de arquivos (file://), ele usa o servidor local.
-// Quando acessado via HTTP(S), usa o mesmo host/origem da página.
+// Em localhost, usa o servidor local. No GitHub Pages, usa o backend público.
 
 function apiUrl(path) {
   return `${API_BASE_URL}${path}`;
@@ -1535,7 +1538,6 @@ async function loadGaleria() {
         <div class="galeria-info">
           <h4>${img.especie}</h4>
           ${isFeatured ? `<div class="featured-badge" style="margin-bottom:.5rem;">Destaque escolhido</div>` : ''}
-          <div class="galeria-meta">📍 ${img.local}</div>
           <div class="galeria-meta">📅 ${img.data}</div>
           <div class="galeria-meta">🏷️ ${img.tipo === 'fauna' ? 'Fauna' : 'Flora'}</div>
           <div class="galeria-user">
