@@ -370,8 +370,7 @@ def atualizar_foto():
         print(f"Erro ao atualizar foto: {e}")
         return jsonify({'error': f'Erro interno do servidor: {str(e)}'}), 500
 
-=======
->>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
+e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
 @app.route('/api/registros', methods=['GET', 'POST'])
 def registros():
     if request.method == 'POST':
@@ -611,9 +610,8 @@ def uploaded_file(filename):
     response.cache_control.max_age = 2592000  # 30 dias em segundos
     response.cache_control.public = True
     return response
-=======
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
->>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
+ e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
