@@ -360,6 +360,8 @@
   .perfil-imagem-delete:hover { background:#dc2626; }
   .perfil-imagem-btn { position:relative; background:rgba(59,130,246,.9); color:#fff; border:none; border-radius:6px; width:36px; height:36px; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; transition:.2s; font-weight:600; }
   .perfil-imagem-btn:hover { opacity:0.8; transform:scale(1.1); }
+  .perfil-imagem-btn { position:relative; background:rgba(59,130,246,.9); color:#fff; border:none; border-radius:6px; width:36px; height:36px; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; transition:.2s; font-weight:600; }
+  .perfil-imagem-btn:hover { opacity:0.8; transform:scale(1.1); }
 
     /* ── FEED COMUNIDADE ─────────────────────────────── */
     .feed-section { max-width:1100px; margin:0 auto 3rem; padding:0 2rem; }
@@ -452,11 +454,11 @@
       </div>
       <div class="form-group">
         <label>Foto de perfil (opcional)</label>
-        <input type="file" id="cad-foto" accept="image/*" capture="user" onchange="previewFotoPerfil(event)">
+        <input type="file" id="cad-foto" accept="image/*" onchange="previewFotoPerfil(event)">
         <div id="preview-foto-container" style="margin-top:0.5rem;display:none;">
           <img id="preview-foto" src="" alt="Preview da foto" style="max-width:100px;max-height:100px;border-radius:8px;border:2px solid var(--verde-claro);">
         </div>
-        <small style="color:var(--cinza);font-size:0.8rem;">JPG, PNG ou WebP — máx. 50MB</small>
+        <small style="color:var(--cinza);font-size:0.8rem;">JPG, PNG ou WebP — máx. 50MB. Toque para escolher da galeria ou tirar foto.</small>
 
       </div>
       <button class="btn-full" onclick="fazerCadastro()">Criar conta</button>
@@ -771,17 +773,13 @@
   <div class="page-content">
     <div class="perfil-header">
       <div class="perfil-avatar">
-        <label for="perfil-foto-input" style="cursor:pointer;position:relative;width:fit-content;">
-          <div id="perfil-avatar-img" class="perfil-avatar-display">?</div>
-          <div style="position:absolute;bottom:0;right:0;background:var(--verde-claro);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,0.2);">📸</div>
-        </label>
-        <input type="file" id="perfil-foto-input" accept="image/*" onchange="atualizarFotoPerfil(event)" style="display:none;">
       </div>
       <div class="perfil-info">
         <h3 id="perfil-nome">Carregando...</h3>
         <p id="perfil-email" class="perfil-email"></p>
         <p id="perfil-tipo" class="perfil-tipo"></p>
         <p id="perfil-contribuicoes" class="perfil-contribuicoes" style="margin-top:1rem;color:var(--verde);font-weight:700;">0 imagens enviadas</p>
+        <small style="color:var(--cinza);font-size:0.85rem;margin-top:0.5rem;">Toque no avatar para alterar sua foto de perfil</small>
         <small style="color:var(--cinza);font-size:0.85rem;margin-top:0.5rem;">Toque no avatar para alterar sua foto de perfil</small>
       </div>
     </div>
@@ -847,6 +845,8 @@ let state = {
   registros: [],
   denuncias: [],
   tipoSelecionado: null,
+  usuarios: [],
+  galleryAutoRefreshInterval: null
   usuarios: [],
   galleryAutoRefreshInterval: null
 };
@@ -1001,22 +1001,6 @@ function showPage(id) {
   document.getElementById('nav-'+id).classList.add('active');
   if (id === 'registro') loadRegistros();
   if (id === 'denuncia') loadDenuncias();
-  if (id === 'imagens') {
-    loadGaleria();
-    // Auto-refresh da galeria a cada 30 segundos quando a página está visível
-    if (state.galleryAutoRefreshInterval) clearInterval(state.galleryAutoRefreshInterval);
-    state.galleryAutoRefreshInterval = setInterval(() => {
-      if (document.getElementById('page-imagens').classList.contains('active')) {
-        loadGaleria();
-      }
-    }, 30000); // 30 segundos
-  } else {
-    // Desativar auto-refresh quando sai da página de imagens
-    if (state.galleryAutoRefreshInterval) {
-      clearInterval(state.galleryAutoRefreshInterval);
-      state.galleryAutoRefreshInterval = null;
-    }
-  }
   if (id === 'perfil') loadPerfil();
   updateAvisos();
   return false;
@@ -1142,13 +1126,6 @@ function loginSuccess() {
   saveUserToStorage();
   closeModal();
   setUserUI();
-  // Recarregar imagens após login
-  setTimeout(() => {
-    loadCommunityFeed();
-    if (document.getElementById('page-imagens').classList.contains('active')) {
-      loadGaleria();
-    }
-  }, 500);
 }
 
 function sair() {
@@ -1158,13 +1135,6 @@ function sair() {
   document.getElementById('btn-abrir-login').style.display = 'block';
   document.getElementById('nav-perfil-item').style.display = 'none';
   updateAvisos();
-  // Recarregar imagens após logout
-  setTimeout(() => {
-    loadCommunityFeed();
-    if (document.getElementById('page-imagens').classList.contains('active')) {
-      loadGaleria();
-    }
-  }, 500);
   toast('Até logo!');
 }
 
@@ -1191,60 +1161,6 @@ function previewFotoPerfil(event) {
     reader.readAsDataURL(file);
   } else {
     previewContainer.style.display = 'none';
-  }
-}
-
-async function atualizarFotoPerfil(event) {
-  if (!state.user) {
-    toast('Você precisa estar logado.', 'error');
-    return;
-  }
-
-  const file = event.target.files[0];
-  if (!file) return;
-
-  // Validar tamanho
-  if (file.size > 50 * 1024 * 1024) {
-    toast('Foto muito grande. O tamanho máximo permitido é 50MB.', 'error');
-    event.target.value = '';
-    return;
-  }
-
-  try {
-    const formData = new FormData();
-    formData.append('usuario_id', state.user.id);
-    formData.append('foto', file);
-
-    const res = await fetch(apiUrl('/api/atualizar-foto'), {
-      method: 'POST',
-      body: formData
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      // Atualizar foto no state
-      state.user.foto = data.foto_url;
-      saveUserToStorage();
-      
-      // Atualizar preview na UI
-      const avatarDisplay = document.getElementById('perfil-avatar-img');
-      avatarDisplay.innerHTML = `<img src="${resolveMediaUrl(data.foto_url)}" alt="Avatar de ${state.user.nome}" style="width:100%;height:100%;object-fit:cover;">`;
-      
-      // Atualizar foto na navbar também
-      const navAvatar = document.getElementById('user-avatar');
-      if (navAvatar) {
-        navAvatar.innerHTML = `<img src="${resolveMediaUrl(data.foto_url)}" alt="Foto de perfil" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
-      }
-
-      toast('Foto de perfil atualizada com sucesso! 📸', 'success');
-      event.target.value = '';
-    } else {
-      toast(data.error || 'Erro ao atualizar foto de perfil', 'error');
-    }
-  } catch (e) {
-    console.error('Erro ao atualizar foto:', e);
-    toast('Erro de conexão ao atualizar foto', 'error');
   }
 }
 
@@ -1344,11 +1260,6 @@ document.getElementById('registro-form').addEventListener('submit', async e => {
       document.getElementById('preview-img').style.display = 'none';
       document.getElementById('upload-text').style.display = 'block';
       loadRegistros();
-      // Recarregar galeria e feed após enviar uma nova imagem
-      setTimeout(() => {
-        loadGaleria();
-        loadCommunityFeed();
-      }, 300);
     } else {
       toast(data.error || 'Erro no servidor', 'error');
     }
@@ -1360,17 +1271,6 @@ document.getElementById('registro-form').addEventListener('submit', async e => {
 
 async function loadRegistros() {
   try {
-    // Adicionar timestamp para forçar atualização
-    const timestamp = new Date().getTime();
-    const res = await fetch(apiUrl(`/api/registros?t=${timestamp}`), {
-      method: 'GET',
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
-    });
     state.registros = await res.json();
     renderRegistros();
   } catch (e) {
@@ -1431,17 +1331,6 @@ document.getElementById('denuncia-form').addEventListener('submit', async e => {
 
 async function loadDenuncias() {
   try {
-    // Adicionar timestamp para forçar atualização
-    const timestamp = new Date().getTime();
-    const res = await fetch(apiUrl(`/api/denuncias?t=${timestamp}`), {
-      method: 'GET',
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
-    });
     state.denuncias = await res.json();
     renderDenuncias();
   } catch (e) {
@@ -1481,16 +1370,6 @@ function emailPrefeitura() {
 // ── STATS ─────────────────────────────────────────────
 async function updateStats() {
   try {
-    const timestamp = new Date().getTime();
-    const res = await fetch(apiUrl(`/api/stats?t=${timestamp}`), {
-      method: 'GET',
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
-    });
     const stats = await res.json();
     document.getElementById('stat-usuarios').textContent = stats.usuarios;
     document.getElementById('stat-registros').textContent = stats.registros;
@@ -1655,17 +1534,6 @@ async function loadGaleria() {
   gridEl.innerHTML = '';
   
   try {
-    // Adicionar timestamp para evitar cache obsoleto
-    const timestamp = new Date().getTime();
-    const res = await fetch(apiUrl(`/api/imagens?t=${timestamp}`), {
-      method: 'GET',
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
-    });
     const imagens = await res.json();
     
     loadingEl.style.display = 'none';
@@ -1749,17 +1617,6 @@ async function loadCommunityFeed() {
   gridEl.innerHTML = '';
 
   try {
-    // Forçar atualização de dados com cache-busting
-    const timestamp = new Date().getTime();
-    const res = await fetch(apiUrl(`/api/imagens?t=${timestamp}`), {
-      method: 'GET',
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
-    });
     if (!res.ok) throw new Error('Erro ao carregar feed');
 
     const imagens = await res.json();
@@ -1850,17 +1707,6 @@ async function loadPerfil() {
       avatarDisplay.textContent = state.user.nome[0].toUpperCase();
     }
 
-    // Carregar imagens do usuário com cache-busting
-    const timestamp = new Date().getTime();
-    const res = await fetch(apiUrl(`/api/imagens?t=${timestamp}`), {
-      method: 'GET',
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
-    });
     if (!res.ok) throw new Error('Erro ao carregar imagens');
     
     const imagens = await res.json();
@@ -1878,15 +1724,6 @@ async function loadPerfil() {
     gridEl.innerHTML = usuarioImagens.map(img => `
       <div class="perfil-imagem-card galeria-item">
         <img src="${resolveMediaUrl(img.img)}" alt="${img.especie}" loading="lazy" class="galeria-img">
-        <div style="position:absolute;top:0.5rem;right:0.5rem;display:flex;gap:0.4rem;">
-          <button class="perfil-imagem-btn" onclick="arquivarImagemUsuario(${img.id})" title="${img.arquivado ? 'Restaurar imagem' : 'Arquivar imagem'}" style="background:rgba(59,130,246,.9);">${img.arquivado ? '📂' : '📁'}</button>
-          <button class="perfil-imagem-btn" onclick="excluirImagemUsuario(${img.id})" title="Excluir permanentemente" style="background:rgba(220,38,38,.9);">🗑️</button>
-        </div>
-        <div style="padding:0.75rem;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
-            <div style="font-weight:600;font-size:0.95rem;">${img.especie}</div>
-            ${img.arquivado ? '<span style="background:#f59e0b;color:#fff;padding:0.25rem 0.5rem;border-radius:4px;font-size:0.75rem;font-weight:600;">Arquivado</span>' : ''}
-          </div>
           <div style="color:var(--cinza);font-size:0.85rem;margin-bottom:0.5rem;">${img.local || 'Local não informado'}</div>
           <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
             <span class="featured-badge">${img.tipo}</span>
@@ -1904,37 +1741,13 @@ async function loadPerfil() {
   }
 }
 
-async function arquivarImagemUsuario(registroId) {
-  if (!state.user) {
-    toast('Você precisa estar logado.', 'error');
-    return;
-  }
-
-  try {
-    const res = await fetch(apiUrl(`/api/imagens/${registroId}/arquivar`), {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ usuario_id: state.user.id })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      toast(data.arquivado ? 'Imagem arquivada! 📁' : 'Imagem restaurada! 📸', 'success');
-      loadPerfil();
-    } else {
-      toast(data.error || 'Não foi possível arquivar a imagem.', 'error');
-    }
-  } catch (e) {
-    console.error('Erro ao arquivar imagem:', e);
-    toast('Erro ao arquivar a imagem.', 'error');
-  }
-}
-
 async function excluirImagemUsuario(registroId) {
   if (!state.user) {
     toast('Você precisa estar logado.', 'error');
     return;
   }
 
+  if (!confirm('Tem certeza que deseja excluir esta imagem permanentemente? Esta ação não pode ser desfeita.')) return;
   if (!confirm('Tem certeza que deseja excluir esta imagem permanentemente? Esta ação não pode ser desfeita.')) return;
 
   try {
@@ -1947,13 +1760,6 @@ async function excluirImagemUsuario(registroId) {
     if (res.ok) {
       toast('Imagem excluída com sucesso.', 'success');
       loadPerfil();
-      // Recarregar galeria também
-      setTimeout(() => {
-        if (document.getElementById('page-imagens').classList.contains('active')) {
-          loadGaleria();
-        }
-        loadCommunityFeed();
-      }, 300);
     } else {
       toast(data.error || 'Não foi possível excluir a imagem.', 'error');
     }
@@ -1970,10 +1776,6 @@ async function appInit() {
   updateStats();
   // check backend health before calling API endpoints
   try {
-    const res = await fetch(apiUrl('/api/health'), {
-      method: 'GET',
-      cache: 'no-store'
-    });
     if (res.ok) {
       // backend available — load dynamic content
       loadRegistros();
