@@ -311,7 +311,6 @@ def login():
             foto_url = f'/uploads/{os.path.basename(user.foto)}'
     return jsonify({'user': {'id': user.id, 'nome': user.nome, 'email': user.email, 'tipo': user.tipo, 'foto': foto_url}})
 
-<<<<<<< HEAD
 @app.route('/api/atualizar-foto', methods=['POST'])
 def atualizar_foto():
     try:
@@ -606,7 +605,6 @@ def delete_imagem(registro_id):
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
-<<<<<<< HEAD
     from flask import make_response
     response = make_response(send_from_directory(app.config['UPLOAD_FOLDER'], filename))
     # Permitir cache longo (30 dias) já que os nomes de arquivo são únicos com timestamp
