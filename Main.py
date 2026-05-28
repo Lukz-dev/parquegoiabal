@@ -311,6 +311,7 @@ def login():
             foto_url = f'/uploads/{os.path.basename(user.foto)}'
     return jsonify({'user': {'id': user.id, 'nome': user.nome, 'email': user.email, 'tipo': user.tipo, 'foto': foto_url}})
 
+<<<<<<< HEAD
 @app.route('/api/atualizar-foto', methods=['POST'])
 def atualizar_foto():
     try:
@@ -370,6 +371,8 @@ def atualizar_foto():
         print(f"Erro ao atualizar foto: {e}")
         return jsonify({'error': f'Erro interno do servidor: {str(e)}'}), 500
 
+=======
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
 @app.route('/api/registros', methods=['GET', 'POST'])
 def registros():
     if request.method == 'POST':
@@ -603,12 +606,16 @@ def delete_imagem(registro_id):
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
+<<<<<<< HEAD
     from flask import make_response
     response = make_response(send_from_directory(app.config['UPLOAD_FOLDER'], filename))
     # Permitir cache longo (30 dias) já que os nomes de arquivo são únicos com timestamp
     response.cache_control.max_age = 2592000  # 30 dias em segundos
     response.cache_control.public = True
     return response
+=======
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

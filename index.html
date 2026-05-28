@@ -356,8 +356,11 @@
   .perfil-imagem-card { position:relative; }
   .perfil-imagem-delete { position:absolute; top:.5rem; right:.5rem; background:rgba(220,38,38,.9); color:#fff; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; font-size:1.2rem; display:flex; align-items:center; justify-content:center; transition:.2s; }
   .perfil-imagem-delete:hover { background:#dc2626; }
+<<<<<<< HEAD
   .perfil-imagem-btn { position:relative; background:rgba(59,130,246,.9); color:#fff; border:none; border-radius:6px; width:36px; height:36px; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; transition:.2s; font-weight:600; }
   .perfil-imagem-btn:hover { opacity:0.8; transform:scale(1.1); }
+=======
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
 
     /* ── FEED COMUNIDADE ─────────────────────────────── */
     .feed-section { max-width:1100px; margin:0 auto 3rem; padding:0 2rem; }
@@ -450,11 +453,19 @@
       </div>
       <div class="form-group">
         <label>Foto de perfil (opcional)</label>
+<<<<<<< HEAD
         <input type="file" id="cad-foto" accept="image/*" onchange="previewFotoPerfil(event)">
         <div id="preview-foto-container" style="margin-top:0.5rem;display:none;">
           <img id="preview-foto" src="" alt="Preview da foto" style="max-width:100px;max-height:100px;border-radius:8px;border:2px solid var(--verde-claro);">
         </div>
         <small style="color:var(--cinza);font-size:0.8rem;">JPG, PNG ou WebP — máx. 50MB. Toque para escolher da galeria ou tirar foto.</small>
+=======
+        <input type="file" id="cad-foto" accept="image/*" capture="user" onchange="previewFotoPerfil(event)">
+        <div id="preview-foto-container" style="margin-top:0.5rem;display:none;">
+          <img id="preview-foto" src="" alt="Preview da foto" style="max-width:100px;max-height:100px;border-radius:8px;border:2px solid var(--verde-claro);">
+        </div>
+        <small style="color:var(--cinza);font-size:0.8rem;">JPG, PNG ou WebP — máx. 50MB</small>
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
       </div>
       <button class="btn-full" onclick="fazerCadastro()">Criar conta</button>
     </div>
@@ -768,18 +779,25 @@
   <div class="page-content">
     <div class="perfil-header">
       <div class="perfil-avatar">
+<<<<<<< HEAD
         <label for="perfil-foto-input" style="cursor:pointer;position:relative;width:fit-content;">
           <div id="perfil-avatar-img" class="perfil-avatar-display">?</div>
           <div style="position:absolute;bottom:0;right:0;background:var(--verde-claro);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;box-shadow:0 2px 8px rgba(0,0,0,0.2);">📸</div>
         </label>
         <input type="file" id="perfil-foto-input" accept="image/*" onchange="atualizarFotoPerfil(event)" style="display:none;">
+=======
+        <div id="perfil-avatar-img" class="perfil-avatar-display">?</div>
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
       </div>
       <div class="perfil-info">
         <h3 id="perfil-nome">Carregando...</h3>
         <p id="perfil-email" class="perfil-email"></p>
         <p id="perfil-tipo" class="perfil-tipo"></p>
         <p id="perfil-contribuicoes" class="perfil-contribuicoes" style="margin-top:1rem;color:var(--verde);font-weight:700;">0 imagens enviadas</p>
+<<<<<<< HEAD
         <small style="color:var(--cinza);font-size:0.85rem;margin-top:0.5rem;">Toque no avatar para alterar sua foto de perfil</small>
+=======
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
       </div>
     </div>
     <div style="margin-top:2rem;">
@@ -844,8 +862,12 @@ let state = {
   registros: [],
   denuncias: [],
   tipoSelecionado: null,
+<<<<<<< HEAD
   usuarios: [],
   galleryAutoRefreshInterval: null
+=======
+  usuarios: []
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
 };
 let galleryMap = null;
 let galleryMarkers = [];
@@ -998,6 +1020,7 @@ function showPage(id) {
   document.getElementById('nav-'+id).classList.add('active');
   if (id === 'registro') loadRegistros();
   if (id === 'denuncia') loadDenuncias();
+<<<<<<< HEAD
   if (id === 'imagens') {
     loadGaleria();
     // Auto-refresh da galeria a cada 30 segundos quando a página está visível
@@ -1014,6 +1037,9 @@ function showPage(id) {
       state.galleryAutoRefreshInterval = null;
     }
   }
+=======
+  if (id === 'imagens') loadGaleria();
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
   if (id === 'perfil') loadPerfil();
   updateAvisos();
   return false;
@@ -1139,6 +1165,7 @@ function loginSuccess() {
   saveUserToStorage();
   closeModal();
   setUserUI();
+<<<<<<< HEAD
   // Recarregar imagens após login
   setTimeout(() => {
     loadCommunityFeed();
@@ -1146,6 +1173,8 @@ function loginSuccess() {
       loadGaleria();
     }
   }, 500);
+=======
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
 }
 
 function sair() {
@@ -1155,6 +1184,7 @@ function sair() {
   document.getElementById('btn-abrir-login').style.display = 'block';
   document.getElementById('nav-perfil-item').style.display = 'none';
   updateAvisos();
+<<<<<<< HEAD
   // Recarregar imagens após logout
   setTimeout(() => {
     loadCommunityFeed();
@@ -1162,6 +1192,8 @@ function sair() {
       loadGaleria();
     }
   }, 500);
+=======
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
   toast('Até logo!');
 }
 
@@ -1191,6 +1223,7 @@ function previewFotoPerfil(event) {
   }
 }
 
+<<<<<<< HEAD
 async function atualizarFotoPerfil(event) {
   if (!state.user) {
     toast('Você precisa estar logado.', 'error');
@@ -1245,6 +1278,8 @@ async function atualizarFotoPerfil(event) {
   }
 }
 
+=======
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
 function previewImage(event) {
   const input = event.target;
   const preview = document.getElementById('preview-img');
@@ -1341,11 +1376,14 @@ document.getElementById('registro-form').addEventListener('submit', async e => {
       document.getElementById('preview-img').style.display = 'none';
       document.getElementById('upload-text').style.display = 'block';
       loadRegistros();
+<<<<<<< HEAD
       // Recarregar galeria e feed após enviar uma nova imagem
       setTimeout(() => {
         loadGaleria();
         loadCommunityFeed();
       }, 300);
+=======
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
     } else {
       toast(data.error || 'Erro no servidor', 'error');
     }
@@ -1357,6 +1395,7 @@ document.getElementById('registro-form').addEventListener('submit', async e => {
 
 async function loadRegistros() {
   try {
+<<<<<<< HEAD
     // Adicionar timestamp para forçar atualização
     const timestamp = new Date().getTime();
     const res = await fetch(apiUrl(`/api/registros?t=${timestamp}`), {
@@ -1368,6 +1407,9 @@ async function loadRegistros() {
         'Expires': '0'
       }
     });
+=======
+    const res = await fetch(apiUrl('/api/registros'));
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
     state.registros = await res.json();
     renderRegistros();
   } catch (e) {
@@ -1428,6 +1470,7 @@ document.getElementById('denuncia-form').addEventListener('submit', async e => {
 
 async function loadDenuncias() {
   try {
+<<<<<<< HEAD
     // Adicionar timestamp para forçar atualização
     const timestamp = new Date().getTime();
     const res = await fetch(apiUrl(`/api/denuncias?t=${timestamp}`), {
@@ -1439,6 +1482,9 @@ async function loadDenuncias() {
         'Expires': '0'
       }
     });
+=======
+    const res = await fetch(apiUrl('/api/denuncias'));
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
     state.denuncias = await res.json();
     renderDenuncias();
   } catch (e) {
@@ -1478,6 +1524,7 @@ function emailPrefeitura() {
 // ── STATS ─────────────────────────────────────────────
 async function updateStats() {
   try {
+<<<<<<< HEAD
     const timestamp = new Date().getTime();
     const res = await fetch(apiUrl(`/api/stats?t=${timestamp}`), {
       method: 'GET',
@@ -1488,6 +1535,9 @@ async function updateStats() {
         'Expires': '0'
       }
     });
+=======
+    const res = await fetch(apiUrl('/api/stats'));
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
     const stats = await res.json();
     document.getElementById('stat-usuarios').textContent = stats.usuarios;
     document.getElementById('stat-registros').textContent = stats.registros;
@@ -1652,6 +1702,7 @@ async function loadGaleria() {
   gridEl.innerHTML = '';
   
   try {
+<<<<<<< HEAD
     // Adicionar timestamp para evitar cache obsoleto
     const timestamp = new Date().getTime();
     const res = await fetch(apiUrl(`/api/imagens?t=${timestamp}`), {
@@ -1663,6 +1714,9 @@ async function loadGaleria() {
         'Expires': '0'
       }
     });
+=======
+    const res = await fetch(apiUrl('/api/imagens'));
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
     const imagens = await res.json();
     
     loadingEl.style.display = 'none';
@@ -1746,6 +1800,7 @@ async function loadCommunityFeed() {
   gridEl.innerHTML = '';
 
   try {
+<<<<<<< HEAD
     // Forçar atualização de dados com cache-busting
     const timestamp = new Date().getTime();
     const res = await fetch(apiUrl(`/api/imagens?t=${timestamp}`), {
@@ -1757,6 +1812,9 @@ async function loadCommunityFeed() {
         'Expires': '0'
       }
     });
+=======
+    const res = await fetch(apiUrl('/api/imagens'));
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
     if (!res.ok) throw new Error('Erro ao carregar feed');
 
     const imagens = await res.json();
@@ -1847,6 +1905,7 @@ async function loadPerfil() {
       avatarDisplay.textContent = state.user.nome[0].toUpperCase();
     }
 
+<<<<<<< HEAD
     // Carregar imagens do usuário com cache-busting
     const timestamp = new Date().getTime();
     const res = await fetch(apiUrl(`/api/imagens?t=${timestamp}`), {
@@ -1858,6 +1917,10 @@ async function loadPerfil() {
         'Expires': '0'
       }
     });
+=======
+    // Carregar imagens do usuário
+    const res = await fetch(apiUrl('/api/imagens'));
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
     if (!res.ok) throw new Error('Erro ao carregar imagens');
     
     const imagens = await res.json();
@@ -1875,6 +1938,7 @@ async function loadPerfil() {
     gridEl.innerHTML = usuarioImagens.map(img => `
       <div class="perfil-imagem-card galeria-item">
         <img src="${resolveMediaUrl(img.img)}" alt="${img.especie}" loading="lazy" class="galeria-img">
+<<<<<<< HEAD
         <div style="position:absolute;top:0.5rem;right:0.5rem;display:flex;gap:0.4rem;">
           <button class="perfil-imagem-btn" onclick="arquivarImagemUsuario(${img.id})" title="${img.arquivado ? 'Restaurar imagem' : 'Arquivar imagem'}" style="background:rgba(59,130,246,.9);">${img.arquivado ? '📂' : '📁'}</button>
           <button class="perfil-imagem-btn" onclick="excluirImagemUsuario(${img.id})" title="Excluir permanentemente" style="background:rgba(220,38,38,.9);">🗑️</button>
@@ -1884,6 +1948,11 @@ async function loadPerfil() {
             <div style="font-weight:600;font-size:0.95rem;">${img.especie}</div>
             ${img.arquivado ? '<span style="background:#f59e0b;color:#fff;padding:0.25rem 0.5rem;border-radius:4px;font-size:0.75rem;font-weight:600;">Arquivado</span>' : ''}
           </div>
+=======
+        <button class="perfil-imagem-delete" onclick="excluirImagemUsuario(${img.id})" title="Excluir imagem">🗑️</button>
+        <div style="padding:0.75rem;">
+          <div style="font-weight:600;font-size:0.95rem;margin-bottom:0.25rem;">${img.especie}</div>
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
           <div style="color:var(--cinza);font-size:0.85rem;margin-bottom:0.5rem;">${img.local || 'Local não informado'}</div>
           <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
             <span class="featured-badge">${img.tipo}</span>
@@ -1901,6 +1970,7 @@ async function loadPerfil() {
   }
 }
 
+<<<<<<< HEAD
 async function arquivarImagemUsuario(registroId) {
   if (!state.user) {
     toast('Você precisa estar logado.', 'error');
@@ -1926,13 +1996,19 @@ async function arquivarImagemUsuario(registroId) {
   }
 }
 
+=======
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
 async function excluirImagemUsuario(registroId) {
   if (!state.user) {
     toast('Você precisa estar logado.', 'error');
     return;
   }
 
+<<<<<<< HEAD
   if (!confirm('Tem certeza que deseja excluir esta imagem permanentemente? Esta ação não pode ser desfeita.')) return;
+=======
+  if (!confirm('Tem certeza que deseja excluir esta imagem?')) return;
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
 
   try {
     const res = await fetch(apiUrl(`/api/imagens/${registroId}`), {
@@ -1944,6 +2020,7 @@ async function excluirImagemUsuario(registroId) {
     if (res.ok) {
       toast('Imagem excluída com sucesso.', 'success');
       loadPerfil();
+<<<<<<< HEAD
       // Recarregar galeria também
       setTimeout(() => {
         if (document.getElementById('page-imagens').classList.contains('active')) {
@@ -1951,6 +2028,8 @@ async function excluirImagemUsuario(registroId) {
         }
         loadCommunityFeed();
       }, 300);
+=======
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
     } else {
       toast(data.error || 'Não foi possível excluir a imagem.', 'error');
     }
@@ -1967,10 +2046,14 @@ async function appInit() {
   updateStats();
   // check backend health before calling API endpoints
   try {
+<<<<<<< HEAD
     const res = await fetch(apiUrl('/api/health'), {
       method: 'GET',
       cache: 'no-store'
     });
+=======
+    const res = await fetch(apiUrl('/api/health'));
+>>>>>>> e4bbd551af3d6e7cb8eeff2f9a34bdc12efe4baa
     if (res.ok) {
       // backend available — load dynamic content
       loadRegistros();
