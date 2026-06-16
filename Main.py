@@ -134,7 +134,8 @@ def upload_file_to_storage(file_obj, key, content_type=None):
             if hasattr(file_obj, 'seek'):
                 file_obj.seek(0)
             file_data = file_obj.read() if hasattr(file_obj, 'read') else file_obj
-            result = SUPABASE_CLIENT.storage.from_(SUPABASE_STORAGE_BUCKET).upload(key, file_data, content_type=content_type)
+            file_options = {"content-type": content_type} if content_type else {}
+            result = SUPABASE_CLIENT.storage.from_(SUPABASE_STORAGE_BUCKET).upload(key, file_data, file_options=file_options)
             if isinstance(result, dict) and result.get('error'):
                 raise Exception(result.get('error'))
             public_url = get_supabase_public_url(key)
