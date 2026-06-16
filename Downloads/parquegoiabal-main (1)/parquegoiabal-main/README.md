@@ -79,5 +79,3 @@ O backend agora usa Railway Postgres como banco principal e um storage externo p
 - Testar o storage em execução local:
   - `curl http://127.0.0.1:5000/api/storage_check`
 - No Render, se o frontend estiver em outro domínio, use o URL do backend em `index.html`.
-=======
-# 1anodenamoro
