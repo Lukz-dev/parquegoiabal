@@ -631,7 +631,6 @@ def stats():
         'incendio': incendio,
         'poluicao': poluicao
     })
-
 @app.route('/api/imagens')
 def imagens():
     regs = Registro.query.filter(Registro.img.isnot(None)).join(User).add_columns(
@@ -652,8 +651,8 @@ def imagens():
             'lat': r.lat,
             'lng': r.lng,
             'data': r.data.strftime('%d/%m/%Y'),
-            'usuario_foto': r.usuario_foto if r.usuario_foto else None
-            'usuario_foto': f'/uploads/{os.path.basename(r.usuario_foto)}' if r.usuario_foto else None
+            'usuario': r.usuario,
+            'usuario_foto': r.usuario_foto if r.usuario_foto else None,
         })
     return jsonify(result)
 
