@@ -648,11 +648,11 @@ def imagens():
             'tipo': r.tipo,
             'local': r.local,
             'desc': r.desc,
-            'img': f'/uploads/{os.path.basename(r.img)}' if r.img else None,
+            'img': r.img if r.img else None,
             'lat': r.lat,
             'lng': r.lng,
             'data': r.data.strftime('%d/%m/%Y'),
-            'usuario': r.usuario,
+            'usuario_foto': r.usuario_foto if r.usuario_foto else None
             'usuario_foto': f'/uploads/{os.path.basename(r.usuario_foto)}' if r.usuario_foto else None
         })
     return jsonify(result)
