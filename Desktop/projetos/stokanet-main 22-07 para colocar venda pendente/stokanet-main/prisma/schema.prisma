@@ -1,0 +1,571 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum ThemePreference {
+  SUNSET
+  OCEAN
+  FOREST
+  ROSE
+}
+
+enum NfeStatus {
+  PENDENTE
+  PROCESSANDO
+  AUTORIZADO
+  REJEITADO
+  ERRO
+}
+
+enum NfeEnvironment {
+  HOMOLOGACAO
+  PRODUCAO
+}
+
+enum NfeModel {
+  NFE_55
+  NFCE_65
+}
+
+enum DocumentKind {
+  FISCAL
+  NON_FISCAL
+}
+
+enum DocumentModel {
+  NFE_55
+  NFCE_65
+  NFSE
+  ORCAMENTO
+  PEDIDO_VENDA
+  RECIBO_PAGAMENTO
+}
+
+enum DocumentStatus {
+  DRAFT
+  PENDING_TRANSMISSION
+  PROCESSING
+  AUTHORIZED
+  REJECTED
+  PRINT_READY
+  CANCELLED
+  VOIDED
+  ERROR
+}
+
+enum DocumentProvider {
+  FOCUS_NFE
+  TECNOSPEED
+  ENOTAS
+  INTERNAL
+}
+
+enum DocumentPrintFormat {
+  A4
+  THERMAL_80MM
+}
+
+enum NfeTaxRegime {
+  SIMPLES_NACIONAL
+  SIMPLES_EXCESSO_SUBLIMITE
+  REGIME_NORMAL
+}
+
+enum PlanType {
+  MONTHLY
+  ANNUAL
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PENDING
+  EXPIRED
+  SUSPENDED
+}
+
+enum BillingMode {
+  ONE_TIME
+  RECURRING
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String
+  avatarUrl String?
+  themePreference ThemePreference @default(SUNSET)
+  role      String   @default("OPERATOR") // ADMIN, MANAGER, OPERATOR
+  activePlan PlanType?
+  isApproved Boolean  @default(false)
+  isSystemAdmin Boolean @default(false)
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+  closedDailyClosures DailyClosure[] @relation("DailyClosureClosedBy")
+  closedMonthlyClosures MonthlyClosure[] @relation("MonthlyClosureClosedBy")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Company {
+  id          String      @id @default(cuid())
+  name        String
+  legalName   String?
+  cnpj        String?
+  ie          String?
+  fiscalAddress Json?
+  defaultMinStock Int      @default(5)
+  notificationWebhookUrl String?
+  users       User[]
+  customers   Customer[]
+  products    Product[]
+  categories  Category[]
+  movements   Movement[]
+  sales       Sale[]
+  documents   Document[]
+  nfeSettings NfeSettings?
+  suppliers   Supplier[]
+  purchaseOrders PurchaseOrder[]
+  warehouses  Warehouse[]
+  transfers   WarehouseTransfer[]
+  batches     Batch[]
+  auditLogs   AuditLog[]
+  dailyClosures DailyClosure[]
+  monthlyClosures MonthlyClosure[]
+  subscription Subscription?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Subscription {
+  id                    String   @id @default(cuid())
+  companyId             String   @unique
+  company               Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  planType              PlanType
+  billingMode           BillingMode @default(ONE_TIME)
+  status                SubscriptionStatus @default(PENDING)
+  mercadopagoPreferenceId String?
+  mercadopagoSubscriptionId String? @unique
+  mercadopagoPaymentId  String?
+  amount                Float
+  nextBillingDate       DateTime?
+  cancelledAt           DateTime?
+  expiresAt             DateTime?
+  autoRenew             Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String
+  companyId String
+  company   Company   @relation(fields: [companyId], references: [id])
+  products  Product[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  sku         String
+  ncm         String?
+  cest        String?
+  cfop        String?
+  taxProfile  Json?
+  size        String?
+  color       String?
+  price       Float       @default(0.0)
+  purchaseCost Float      @default(0.0)
+  stockQty    Int         @default(0)
+  isBox       Boolean     @default(false)
+  unitsPerBox Int?
+  minStock    Int         @default(5)
+  status      String      @default("Normal")
+  categoryId  String?
+  category    Category?   @relation(fields: [categoryId], references: [id])
+  companyId   String
+  company     Company     @relation(fields: [companyId], references: [id])
+  movements   Movement[]
+  saleItems   SaleItem[]
+  warehouseStocks WarehouseStock[]
+  batches     Batch[]
+  purchaseOrderItems PurchaseOrderItem[]
+  transferItems WarehouseTransferItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Movement {
+  id          String   @id @default(cuid())
+  type        String   // ENTRADA | SAIDA | AJUSTE
+  quantity    Int
+  reason      String?
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Sale {
+  id            String     @id @default(cuid())
+  code          String     @unique
+  subtotal      Float      @default(0.0)
+  discount      Float      @default(0.0)
+  total         Float      @default(0.0)
+  paymentMethod String?
+  notes         String?
+  details       String?
+  isPending     Boolean    @default(false)
+  customerId    String?
+  customer      Customer?  @relation(fields: [customerId], references: [id])
+  nfeStatus     NfeStatus  @default(PENDENTE)
+  nfeEnvironment NfeEnvironment?
+  nfeModel      NfeModel?
+  nfeSeries     String?
+  nfeNumber     Int?
+  nfeAccessKey  String?
+  nfeProtocol   String?
+  nfeDanfeUrl   String?
+  nfeErrorCode  String?
+  nfeErrorMessage String?
+  nfeRawResponse Json?
+  nfeIssuedAt   DateTime?
+  nfeLastAttemptAt DateTime?
+  stockCommittedAt DateTime?
+  companyId     String
+  company       Company    @relation(fields: [companyId], references: [id])
+  items         SaleItem[]
+  documents     Document[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @default(now()) @updatedAt
+
+  @@index([companyId, createdAt])
+  @@index([companyId, nfeStatus])
+}
+
+model NfeSettings {
+  id           String         @id @default(cuid())
+  companyId    String         @unique
+  company      Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  enabled      Boolean        @default(false)
+  environment  NfeEnvironment @default(HOMOLOGACAO)
+  model        NfeModel       @default(NFE_55)
+  series       String         @default("1")
+  nextNumber   Int            @default(1)
+  defaultCfop  String?
+  naturezaOperacao String     @default("Venda")
+  taxRegime    NfeTaxRegime   @default(SIMPLES_NACIONAL)
+  defaultTaxProfile Json?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  cpfCnpj   String
+  email     String?
+  phone     String?
+  address   Json?
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  sales     Sale[]
+  documents Document[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId, name])
+}
+
+model SaleItem {
+  id          String   @id @default(cuid())
+  saleId      String
+  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  productName String
+  sku         String
+  quantity    Int
+  unitPrice   Float
+  total       Float
+  createdAt   DateTime @default(now())
+
+  @@index([saleId])
+  @@index([productId])
+}
+
+model Supplier {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  contactName String?
+  notes       String?
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  purchaseOrders PurchaseOrder[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId, name])
+}
+
+model PurchaseOrder {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  status      String   @default("PENDENTE") // PENDENTE | RECEBIDO | CANCELADO
+  notes       String?
+  expectedAt  DateTime?
+  subtotal    Float    @default(0.0)
+  supplierId  String?
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  items       PurchaseOrderItem[]
+  documents   Document[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId, createdAt])
+}
+
+model PurchaseOrderItem {
+  id              String   @id @default(cuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product  @relation(fields: [productId], references: [id])
+  productName     String
+  quantity        Int
+  unitCost        Float    @default(0.0)
+  total           Float    @default(0.0)
+  createdAt       DateTime @default(now())
+
+  @@index([purchaseOrderId])
+  @@index([productId])
+}
+
+model Document {
+  id               String              @id @default(cuid())
+  code             String              @unique
+  kind             DocumentKind
+  model            DocumentModel
+  status           DocumentStatus      @default(DRAFT)
+  provider         DocumentProvider?
+  printFormat      DocumentPrintFormat @default(A4)
+  series           String?
+  number           Int?
+  externalId       String?
+  accessKey        String?
+  protocol         String?
+  providerResponse Json?
+  payload          Json?
+  notes            String?
+  subtotal         Float               @default(0.0)
+  discount         Float               @default(0.0)
+  total            Float               @default(0.0)
+  issuedAt         DateTime?
+  authorizedAt     DateTime?
+  rejectedAt       DateTime?
+  printedAt        DateTime?
+  saleId           String?
+  sale             Sale?               @relation(fields: [saleId], references: [id], onDelete: SetNull)
+  purchaseOrderId  String?
+  purchaseOrder    PurchaseOrder?      @relation(fields: [purchaseOrderId], references: [id], onDelete: SetNull)
+  customerId       String?
+  customer         Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  companyId        String
+  company          Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  items            DocumentItem[]
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  @@index([companyId, createdAt])
+  @@index([companyId, kind, status])
+  @@index([saleId])
+  @@index([purchaseOrderId])
+  @@index([customerId])
+}
+
+model DocumentItem {
+  id          String   @id @default(cuid())
+  documentId  String
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  productId   String?
+  description String
+  sku         String?
+  quantity    Float    @default(1)
+  unitPrice   Float    @default(0.0)
+  total       Float    @default(0.0)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([documentId])
+  @@index([productId])
+}
+
+model Warehouse {
+  id          String   @id @default(cuid())
+  name        String
+  code        String
+  address     String?
+  isDefault   Boolean  @default(false)
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  stocks      WarehouseStock[]
+  transferFrom WarehouseTransfer[] @relation("TransferFrom")
+  transferTo   WarehouseTransfer[] @relation("TransferTo")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([companyId, code])
+  @@index([companyId, name])
+}
+
+model WarehouseStock {
+  id          String   @id @default(cuid())
+  warehouseId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  quantity    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([warehouseId, productId])
+  @@index([productId])
+}
+
+model WarehouseTransfer {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  status          String   @default("CONCLUIDO")
+  fromWarehouseId String
+  fromWarehouse   Warehouse @relation("TransferFrom", fields: [fromWarehouseId], references: [id])
+  toWarehouseId   String
+  toWarehouse     Warehouse @relation("TransferTo", fields: [toWarehouseId], references: [id])
+  notes           String?
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id])
+  items           WarehouseTransferItem[]
+  createdAt       DateTime @default(now())
+
+  @@index([companyId, createdAt])
+}
+
+model WarehouseTransferItem {
+  id          String   @id @default(cuid())
+  transferId  String
+  transfer    WarehouseTransfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  productName String
+  quantity    Int
+  createdAt   DateTime @default(now())
+
+  @@index([transferId])
+}
+
+model Batch {
+  id          String   @id @default(cuid())
+  code        String
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  quantity    Int      @default(0)
+  expiresAt   DateTime
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId, expiresAt])
+  @@index([productId])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String
+  entity      String
+  entityId    String?
+  details     String?
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  userId      String?
+  createdAt   DateTime @default(now())
+
+  @@index([companyId, createdAt])
+  @@index([entity, entityId])
+}
+
+model DailyClosure {
+  id                   String   @id @default(cuid())
+  day                  DateTime
+  monthKey             String
+  status               String   @default("OPEN") // OPEN | CLOSED
+  notes                String?
+  salesCount           Int      @default(0)
+  salesTotal           Float    @default(0.0)
+  purchaseOrdersCount  Int      @default(0)
+  purchaseTotal        Float    @default(0.0)
+  stockEntriesQty      Int      @default(0)
+  stockOutputsQty      Int      @default(0)
+  stockAdjustmentsQty  Int      @default(0)
+  stockBalanceQty      Int      @default(0)
+  cashExpected         Float    @default(0.0)
+  stockValue           Float    @default(0.0)
+  closedAt             DateTime?
+  closedById           String?
+  closedBy             User?    @relation("DailyClosureClosedBy", fields: [closedById], references: [id])
+  monthlyClosureId     String?
+  monthlyClosure       MonthlyClosure? @relation(fields: [monthlyClosureId], references: [id])
+  companyId            String
+  company              Company  @relation(fields: [companyId], references: [id])
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([companyId, day])
+  @@index([companyId, monthKey])
+  @@index([monthKey, day])
+}
+
+model MonthlyClosure {
+  id                  String   @id @default(cuid())
+  year                Int
+  month               Int
+  monthKey            String
+  status              String   @default("OPEN") // OPEN | CLOSED
+  notes               String?
+  daysClosed          Int      @default(0)
+  salesCount          Int      @default(0)
+  salesTotal          Float    @default(0.0)
+  purchaseOrdersCount Int      @default(0)
+  purchaseTotal       Float    @default(0.0)
+  stockEntriesQty     Int      @default(0)
+  stockOutputsQty     Int      @default(0)
+  stockAdjustmentsQty Int      @default(0)
+  stockBalanceQty     Int      @default(0)
+  cashExpected        Float    @default(0.0)
+  closedAt            DateTime?
+  closedById          String?
+  closedBy            User?    @relation("MonthlyClosureClosedBy", fields: [closedById], references: [id])
+  companyId           String
+  company             Company  @relation(fields: [companyId], references: [id])
+  dailyClosures       DailyClosure[]
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([companyId, year, month])
+  @@index([companyId, monthKey])
+}
